@@ -45,7 +45,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 # Prever LEGACY OpenGL to eb compatible with all the existing releases and
 # platforms which don't hare GLVND yet. Only do it if preference was not set
@@ -111,7 +111,7 @@ include(build_files/cmake/macros.cmake)
 
 blender_project_hack_pre()
 
-project(RangeEngine)
+project(UPBGE2.x)
 
 blender_project_hack_post()
 
@@ -385,7 +385,7 @@ mark_as_advanced(WITH_SYSTEM_GFLAGS)
 mark_as_advanced(WITH_SYSTEM_GLOG)
 
 # Freestyle
-option(WITH_FREESTYLE     "Enable Freestyle (advanced edges rendering)" ON)
+option(WITH_FREESTYLE     "Enable Freestyle (advanced edges rendering)" OFF)
 
 # Misc
 if(WIN32)
@@ -419,7 +419,7 @@ option(WITH_CPU_SSE              "Enable SIMD instruction if they're detected on
 mark_as_advanced(WITH_CPU_SSE)
 
 # Cycles
-option(WITH_CYCLES					"Enable Cycles Render Engine" ON)
+option(WITH_CYCLES					"Enable Cycles Render Engine" OFF)
 option(WITH_CYCLES_STANDALONE		"Build Cycles standalone application" OFF)
 option(WITH_CYCLES_STANDALONE_GUI	"Build Cycles standalone with GUI" OFF)
 option(WITH_CYCLES_OSL				"Build Cycles with OSL support" ${_init_CYCLES_OSL})

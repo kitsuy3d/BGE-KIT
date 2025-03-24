@@ -1,0 +1,38 @@
+// Fractal Ripple Shader
+uniform sampler2D bgl_RenderedTexture;        // Input texture
+uniform float timer;                          // Time for animation
+uniform float bgl_RenderedTextureWidth;       // Screen width
+uniform float bgl_RenderedTextureHeight;      // Screen height
+uniform float rippleStrength = 0.1;           // Controls the strength of the ripples
+uniform float frequency = 5.0;                // Controls the frequency of the ripples
+uniform float noiseScale = 10.0;              // Scale for the fractal noise
+
+// Simplex noise function (or any other noise function you prefer)
+float noise(vec2 uv) {
+    // Placeholder for a noise function, implement your own or use a noise library
+    return fract(sin(dot(uv.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void main()
+{
+    // Normalize coordinates
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight);
+
+    // Generate fractal noise
+    float n = noise(uv * noiseScale + timer * 0.1);
+    
+    // Calculate ripple effect based on distance and timer
+    float ripple = sin(distance(uv, vec2(0.5, 0.5)) * frequency + timer) * rippleStrength;
+    
+    // Apply ripple distortion to the UV coordinates
+    vec2 distortedUV = uv + ripple * vec2(cos(n * 10.0), sin(n * 10.0)) * 0.05;
+
+    // Sample the color from the original texture
+    vec4 color = texture2D(bgl_RenderedTexture, distortedUV);
+
+    // Combine the original color with the noise for a textured look
+    color.rgb += n * 0.1; // Adding noise to color
+
+    // Output the final color
+    gl_FragColor = vec4(color.rgb, 1.0);
+}

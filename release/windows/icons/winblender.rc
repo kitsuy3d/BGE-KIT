@@ -10,7 +10,7 @@
 	1 RT_MANIFEST "blender.exe.manifest"
 #endif
 
-APPICON ICON DISCARDABLE "winupbge.ico"
+APPICON ICON DISCARDABLE "winblender.ico"
 BLENDERFILE ICON DISCARDABLE "winblenderfile.ico"
 
 IDR_VERSION1 VERSIONINFO
@@ -25,11 +25,11 @@ BEGIN
     BEGIN
       VALUE "FileVersion", BLEN_VER_RC_STR
       VALUE "ProductVersion", BLEN_VER_RC_STR
-      VALUE "CompanyName", "RangeEngine - Blender Fork"
-      VALUE "FileDescription", "Range"
+      VALUE "CompanyName", "UPBGE02 - Legacy Blender Fork"
+      VALUE "FileDescription", "UPBGE02 - Menu"
       VALUE "LegalCopyright", "GPLv2"
-      VALUE "OriginalFilename", "blender-range.exe"
-      VALUE "ProductName", "Range"
+      VALUE "OriginalFilename", "blender.exe"
+      VALUE "ProductName", "blender"
     END
   END
   BLOCK "VarFileInfo"

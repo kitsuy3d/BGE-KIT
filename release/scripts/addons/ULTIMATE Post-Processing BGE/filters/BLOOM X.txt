@@ -1,0 +1,28 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform sampler2D bgl_LuminanceTexture;
+
+uniform float bloom_x;
+
+void main()
+{
+   vec4 sum = vec4(0);
+   vec4 bum = vec4(0);
+   vec2 texcoord = vec2(gl_TexCoord[0]);
+   int j;
+   int i;
+
+   for( i= -5 ;i < 5; i++)
+   {
+        for (j = -1; j < 1; j++)
+        {
+            sum += texture2D(bgl_RenderedTexture, texcoord + vec2(-i, j)*0.002) * bloom_x;
+			bum += texture2D(bgl_RenderedTexture, texcoord + vec2(j, i)*0.003) * bloom_x;            
+        }
+   }
+       if (texture2D(bgl_RenderedTexture, texcoord).r < 2.0)
+    {
+       gl_FragColor = sum*sum*sum*0.0080+bum*bum*bum*0.0080+ texture2D(bgl_RenderedTexture, texcoord);
+    }
+}
+
+// + texture2D(bgl_LuminanceTexture, texcoord)

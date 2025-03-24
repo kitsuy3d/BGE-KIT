@@ -1,0 +1,14 @@
+uniform sampler2D bgl_RenderedTexture; // Rendered texture
+uniform float gamma;                   // Gamma control variable
+
+void main()
+{
+    // Sample the original color from the rendered texture
+    vec4 color = texture2D(bgl_RenderedTexture, gl_TexCoord[0].xy);
+    
+    // Apply gamma correction
+    color.rgb = pow(color.rgb, vec3(1.0 / gamma));
+    
+    // Output the adjusted color
+    gl_FragColor = color;
+}

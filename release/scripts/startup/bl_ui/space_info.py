@@ -30,6 +30,7 @@ class INFO_HT_header(Header):
         window = context.window
         scene = context.scene
         rd = scene.render
+        #gs = context.scene.game_settings
 
         row = layout.row(align=True)
         row.template_header()
@@ -39,6 +40,8 @@ class INFO_HT_header(Header):
         if window.screen.show_fullscreen:
             layout.operator("screen.back_to_previous", icon='SCREEN_BACK', text="Back to Previous")
             layout.separator()
+            layout.template_ID(context.window, "screen", new="screen.new", unlink="screen.delete")
+            layout.template_ID(context.screen, "scene", new="scene.new", unlink="scene.delete")
         else:
             layout.template_ID(context.window, "screen", new="screen.new", unlink="screen.delete")
             layout.template_ID(context.screen, "scene", new="scene.new", unlink="scene.delete")
@@ -67,11 +70,18 @@ class INFO_HT_header(Header):
             # include last so text doesn't push buttons out of the header
             row.label(bpy.app.autoexec_fail_message)
             return
-        
-        layout.operator("view3d.game_start", text="Play", icon="PLAY")
+        #row = layout.row(align=1)
+        #if gs.pro_mode!=True:row.prop(gs, "pro_mode")
+        layout.operator("wm.blenderplayer_start", text="", icon="FULLSCREEN_ENTER")
+        layout.operator("wm.velocityplayer_start", text="", icon="WORLD")
         row = layout.row(align=1)
-        row.operator("wm.splash", text="", icon='BLENDER', emboss=1)
-        row.label(text=scene.statistics(), translate=0)
+        layout.operator("view3d.game_start", text="", icon="PLAY")
+        row.label(text="Play", translate=1)
+        row = layout.row(align=1)
+        row.operator("wm.splash", text="RETRO UPBGE 0.2.6016a", icon='BLENDER', emboss=1)
+        #layout.operator("wm.save_as_runtime", text="Make Game.exe", icon="GAME")
+        layout.operator("wm.export_with_bpplayer", text="Export Game With BPplayer", icon='GAME')
+        #row.label(text=scene.statistics(), translate=0)
 
 
 class INFO_MT_editor_menus(Menu):
@@ -94,7 +104,7 @@ class INFO_MT_editor_menus(Menu):
             layout.menu("INFO_MT_render")
 
         layout.menu("INFO_MT_window")
-        layout.menu("INFO_MT_help")
+        #layout.menu("INFO_MT_help")
 
 
 class INFO_MT_file(Menu):
@@ -153,7 +163,11 @@ class INFO_MT_file(Menu):
         layout.menu("INFO_MT_file_import", icon='IMPORT')
         layout.menu("INFO_MT_file_export", icon='EXPORT')
 
-        layout.separator()
+        layout.operator_context = 'INVOKE_AREA'
+
+        #layout.operator("wm.save_as_mainfile_protected", text="Save .blen Protected File", icon='GAME').copy = True
+        
+        #layout.separator()
 
         layout.menu("INFO_MT_file_external_data", icon='EXTERNAL_DATA')
         layout.operator("wm.blend_strings_utf8_validate", icon='FILE_BLEND')
@@ -171,8 +185,6 @@ class INFO_MT_file_import(Menu):
     bl_label = "Import"
 
     def draw(self, context):
-        if bpy.app.build_options.collada:
-            self.layout.operator("wm.collada_import", text="Collada (Default) (.dae)")
         if bpy.app.build_options.alembic:
             self.layout.operator("wm.alembic_import", text="Alembic (.abc)")
 
@@ -182,8 +194,6 @@ class INFO_MT_file_export(Menu):
     bl_label = "Export"
 
     def draw(self, context):
-        if bpy.app.build_options.collada:
-            self.layout.operator("wm.collada_export", text="Collada (Default) (.dae)")
         if bpy.app.build_options.alembic:
             self.layout.operator("wm.alembic_export", text="Alembic (.abc)")
 
@@ -231,7 +241,7 @@ class INFO_MT_file_previews(Menu):
 
 
 class INFO_MT_game(Menu):
-    bl_label = "Game"
+    bl_label = "Play"
 
     def draw(self, context):
         layout = self.layout
@@ -243,8 +253,8 @@ class INFO_MT_game(Menu):
         layout.separator()
 
         layout.prop(gs, "show_framerate_profile")
-        layout.prop(gs, "show_render_queries")
-        layout.prop(gs, "use_deprecation_warnings")
+        #layout.prop(gs, "show_render_queries")
+        #layout.prop(gs, "use_deprecation_warnings")
         layout.menu("INFO_MT_game_show_debug")
         layout.separator()
         layout.prop(gs, "use_auto_start")
@@ -369,7 +379,7 @@ class INFO_MT_help(Menu):
         layout.operator("wm.sysinfo", icon='TEXT')
         layout.separator()
 
-        layout.operator("wm.splash", icon='BLENDER')
+        layout.operator("wm.splash", text="UPBGE", icon='BLENDER')
 
 
 classes = (
@@ -385,7 +395,7 @@ classes = (
     INFO_MT_render,
     INFO_MT_opengl_render,
     INFO_MT_window,
-    INFO_MT_help,
+    #INFO_MT_help,
 )
 
 if __name__ == "__main__":  # only for live edit.

@@ -857,21 +857,26 @@ static KX_GameObject::ActivityCullingInfo activityCullingInfoFromBlenderObject(O
 		cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
 			cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_PHYSICS);
 	}
-	if (blenderInfo.flags & OB_ACTIVITY_PHYSICS_SLEEPVELOCITY) {
+	//if (blenderInfo.flags & OB_ACTIVITY_PHYSICS_SLEEPVELOCITY) {
 		// Enable physics only stop culling.
-		cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
-			cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_PHYSICS_SLEEPVELOCITY);
-	}
+	//	cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
+	//		cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_PHYSICS_SLEEPVELOCITY);
+	//}
 	if (blenderInfo.flags & OB_ACTIVITY_LOGIC) {
 		// Enable logic culling.
 		cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
 			cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_LOGIC);
 	}
-	if (blenderInfo.flags & OB_ACTIVITY_LOGIC_COMPONENTS) {
+	//if (blenderInfo.flags & OB_ACTIVITY_LOGIC_COMPONENTS) {
 		// Enable logic components culling.
-		cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
-			cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_LOGIC_COMPONENTS);
-	}
+	//	cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
+	//		cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_LOGIC_COMPONENTS);
+	//}
+	//if (blenderInfo.flags & OB_ACTIVITY_PHYSICS_LOW) {
+		// Enable logic components culling.
+	//	cullingInfo.m_flags = (KX_GameObject::ActivityCullingInfo::Flag)(
+	//		cullingInfo.m_flags | KX_GameObject::ActivityCullingInfo::ACTIVITY_PHYSICS_LOW);
+	//}
 
 	// Set culling radius.
 	cullingInfo.m_physicsRadius = blenderInfo.physicsRadius * blenderInfo.physicsRadius;
@@ -1394,7 +1399,7 @@ void BL_ConvertBlenderObjects(struct Main *maggie,
 	kxscene->SetGravity(mt::vec3(0.0f, 0.0f, -blenderscene->gm.gravity));
 
 	// Set activity culling parameters.
-	kxscene->SetActivityCulling((blenderscene->gm.mode & WO_ACTIVITY_CULLING) != 0);
+	//kxscene->SetActivityCulling((blenderscene->gm.mode & WO_ACTIVITY_CULLING) != 0);
 	kxscene->SetDbvtCulling((blenderscene->gm.mode & WO_DBVT_CULLING) != 0);
 
 	// No occlusion culling by default.
@@ -1434,6 +1439,7 @@ void BL_ConvertBlenderObjects(struct Main *maggie,
 	EXP_ListValue<KX_GameObject> *objectlist = kxscene->GetObjectList();
 	EXP_ListValue<KX_GameObject> *inactivelist = kxscene->GetInactiveList();
 	EXP_ListValue<KX_GameObject> *parentlist = kxscene->GetRootParentList();
+	//EXP_ListValue<KX_GameObject> *cullinglist = kxscene->GetCullingList();
 
 	SCA_LogicManager *logicmgr = kxscene->GetLogicManager();
 	SCA_TimeEventManager *timemgr = kxscene->GetTimeEventManager();
@@ -1837,18 +1843,26 @@ void BL_PostConvertBlenderObjects(KX_Scene *kxscene, const BL_SceneConverter& sc
 
 #ifdef WITH_PYTHON
 
+	for (KX_GameObject *gameobj : objectlist) {
+		if (gameobj->GetComponents()) {
+			// Register object for component update.
+			kxscene->GetPythonComponentManager().RegisterObject(gameobj);
+		}
+		if (gameobj->GetActivityCullingInfo().m_flags != KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
+			kxscene->AddCullingObject(gameobj);
+		}
+		//if (gameobj->GetMeshUser() != nullptr && gameobj->GetVisible()) {
+		//	kxscene->GetRenderList()->Add(CM_AddRef(gameobj));
+		//}
+		if (gameobj->GetVisible()) {
+			kxscene->GetRenderList()->Add(CM_AddRef(gameobj));
+		}
+	}
 	// Convert the python components of each object if the component execution is available.
 	if (G.f & G_SCRIPT_AUTOEXEC) {
 		for (KX_GameObject *gameobj : sumolist) {
 			Object *blenderobj = gameobj->GetBlenderObject();
 			BL_ConvertComponentsObject(gameobj, blenderobj);
-		}
-
-		for (KX_GameObject *gameobj : objectlist) {
-			if (gameobj->GetComponents()) {
-				// Register object for component update.
-				kxscene->GetPythonComponentManager().RegisterObject(gameobj);
-			}
 		}
 	}
 	else {

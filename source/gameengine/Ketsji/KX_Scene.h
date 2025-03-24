@@ -92,6 +92,11 @@ public:
 	enum DrawingCallbackType {
 		PRE_DRAW = 0,
 		POST_DRAW,
+		THREAD_LOGIC_1,
+		THREAD_LOGIC_2,
+		THREAD_LOGIC_3,
+		LOW_LOGIC_1,
+		HIGH_LOGIC_1,
 		PRE_DRAW_SETUP,
 		MAX_DRAW_CALLBACK
 	};
@@ -140,6 +145,7 @@ private:
 	std::vector<KX_GameObject *> m_euthanasyobjects;
 
 	EXP_ListValue<KX_GameObject> *m_objectlist;
+
 	/// All 'root' parents.
 	EXP_ListValue<KX_GameObject> *m_parentlist;
 	EXP_ListValue<KX_LightObject> *m_lightlist;
@@ -152,6 +158,10 @@ private:
 	EXP_ListValue<KX_Camera> *m_cameralist;
 	/// The list of fonts for this scene.
 	EXP_ListValue<KX_FontObject> *m_fontlist;
+	/// The list of culling objects for this scene.
+	std::vector<KX_GameObject *> m_cullinglist;
+
+	EXP_ListValue<KX_GameObject> *m_renderlist;
 
 	/**
 	 * List of nodes that needs scenegraph update
@@ -221,14 +231,24 @@ private:
 	bool m_suspend;
 	double m_suspendedDelta;
 
+	double m_animTimeStep;
+
 	/// Toggle to enable or disable object activity culling.
-	bool m_activityCulling;
+	//bool m_activityCulling;
 
 	/// Toggle to enable or disable culling via DBVT broadphase of Bullet.
 	bool m_dbvtCulling;
 
+	//bool m_dHalfCulling;
+
 	/// Occlusion culling resolution.
 	int m_dbvtOcclusionRes;
+
+	float m_dist;
+
+	float m_timeleft;
+
+	float m_lodfactor;
 
 	/// The framing settings used by this scene
 	RAS_FrameSettings m_frameSettings;
@@ -253,7 +273,7 @@ private:
 
 	AnimationPoolData m_animationPoolData;
 	TaskPool *m_animationPool;
-	double m_previousAnimTime;
+	//int m_previousAnimTime;
 
 	/// LOD Hysteresis settings.
 	bool m_isActivedHysteresis;
@@ -262,7 +282,12 @@ private:
 	void RemoveNodeDestructObject(KX_GameObject *gameobj);
 	void RemoveObject(KX_GameObject *gameobj);
 	void RemoveDupliGroup(KX_GameObject *gameobj);
+	void InvalidateProxy(KX_GameObject *gameobj);
+	void RemoveMeshes(KX_GameObject *gameobj);
 	bool NewRemoveObject(KX_GameObject *gameobj);
+	void ClearModified();
+	void UpdateBoundsFalse(KX_GameObject *gameobj);
+	void UpdateBoundsTrue(KX_GameObject *gameobj);
 
 public:
 	KX_Scene(SCA_IInputDevice *inputDevice,
@@ -298,6 +323,8 @@ public:
 	void RemoveEuthanasyObjects();
 
 	void AddAnimatedObject(KX_GameObject *gameobj);
+	void AddCullingObject(KX_GameObject *gameobj);
+	void RemoveCullingObject(KX_GameObject *gameobj);
 
 	/**
 	 * \section Logic stuff
@@ -315,6 +342,7 @@ public:
 	EXP_ListValue<KX_LightObject> *GetLightList() const;
 	EXP_ListValue<KX_Camera> *GetCameraList() const;
 	EXP_ListValue<KX_FontObject> *GetFontList() const;
+	EXP_ListValue<KX_GameObject> *GetRenderList() const;
 
 	SCA_LogicManager *GetLogicManager() const;
 	SCA_TimeEventManager *GetTimeEventManager() const;
@@ -389,7 +417,7 @@ public:
 	/// Update the activity culling of objects in this scene, if needed.
 	void UpdateObjectActivity();
 	/// Enable/disable activity culling.
-	void SetActivityCulling(bool b);
+	//void SetActivityCulling(bool b);
 
 	bool IsSuspended() const;
 
@@ -403,6 +431,8 @@ public:
 
 	PHY_IPhysicsEnvironment *GetPhysicsEnvironment() const;
 	void SetPhysicsEnvironment(PHY_IPhysicsEnvironment *physEnv);
+
+	//void SetNumIterations(int numIterations);
 
 	void SetGravity(const mt::vec3& gravity);
 	mt::vec3 GetGravity() const;
@@ -451,6 +481,7 @@ public:
 	static PyObject *pyattr_get_lights(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_texts(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_cameras(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
+	static PyObject *pyattr_get_out_side(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_filter_manager(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_world(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject *pyattr_get_active_camera(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);

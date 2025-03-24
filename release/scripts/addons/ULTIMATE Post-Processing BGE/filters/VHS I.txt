@@ -1,0 +1,36 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform float bgl_RenderedTextureWidth;
+uniform float bgl_RenderedTextureHeight;
+
+uniform float Timer; // تحتاج إلى خاصية (property) Timer في اللوجيك
+
+float iTime = Timer;
+
+vec2 iResolution = vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight);
+vec2 fragCoord = vec2(gl_TexCoord[0].x * bgl_RenderedTextureWidth, gl_TexCoord[0].y * bgl_RenderedTextureHeight);
+
+float onOff(float a, float b, float c) {
+  return step(c, sin(iTime + a * cos(iTime * b)));
+}
+
+vec3 getVideo(vec2 uv) {
+  vec2 look = uv;
+  float window = 1. / (1. + 20. * (look.y - mod(iTime / 4., 1.)) * (look.y - mod(iTime / 4., 1.)));
+  look.x = look.x + sin(look.y * 11. + iTime) / 430. * onOff(4.,4.,.3) * (1. + cos(iTime * 80.)) * window;
+  float vShift = 0.0 * onOff(0.,9.,.9) * (sin(iTime) * sin(iTime * 20.) + (0.5 + 0.1 * sin(iTime * 200.) * cos(iTime)));
+  look.y = mod(look.y + vShift, 1.);
+  vec3 video = vec3(texture(bgl_RenderedTexture, look));
+  return video;
+}
+
+void main(void) {
+  vec2 uv = fragCoord.xy / iResolution.xy;
+  vec3 video = getVideo(uv);
+  float vigAmt = 2. + 0.0 * sin(iTime + 5. * cos(iTime * 5.));
+  float vignette = (1. - vigAmt * (uv.y - .5) * (uv.y - 0.5)) * (1. - vigAmt * (uv.x - .5) * (uv.x - .5));
+  
+  video *= vignette;
+  video *= (15. + mod(uv.y * 0. + iTime, 0.001)) / 13.;
+  
+  gl_FragColor = vec4(video, 1.0);
+}

@@ -113,7 +113,7 @@ class btContactArray:public btAlignedObjectArray<GIM_CONTACT>
 public:
 	btContactArray()
 	{
-		reserve(64);
+		reserve(256); // was 64
 	}
 
 	SIMD_FORCE_INLINE void push_contact(

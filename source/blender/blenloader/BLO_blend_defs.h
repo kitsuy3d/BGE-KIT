@@ -51,6 +51,10 @@ enum {
 	 */
 	DNA1 = BLEND_MAKE_ID('D', 'N', 'A', '1'),
 	/**
+	 * Same as DNA1 but for game engine file.
+	 */
+	DNA2 = BLEND_MAKE_ID('D', 'N', 'A', '2'),
+	/**
 	 * Used to store thumbnail previews, written between #REND and #GLOB blocks,
 	 * (ignored for regular file reading).
 	 */

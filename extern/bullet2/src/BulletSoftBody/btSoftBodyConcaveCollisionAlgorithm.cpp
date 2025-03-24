@@ -31,8 +31,8 @@ subject to the following restrictions:
 #include "LinearMath/btIDebugDraw.h"
 #include "BulletCollision/NarrowPhaseCollision/btSubSimplexConvexCast.h"
 #include "BulletSoftBody/btSoftBody.h"
-
-#define BT_SOFTBODY_TRIANGLE_EXTRUSION btScalar(0.06)//make this configurable
+//Kitsuy fixed 2-22-25
+#define BT_SOFTBODY_TRIANGLE_EXTRUSION btScalar(0.0)//make this configurable
 
 btSoftBodyConcaveCollisionAlgorithm::btSoftBodyConcaveCollisionAlgorithm( const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* body0Wrap,const btCollisionObjectWrapper* body1Wrap,bool isSwapped)
 : btCollisionAlgorithm(ci),

@@ -94,6 +94,48 @@ public:
 	virtual void SetLinearDamping(float damping) = 0;
 	virtual void SetAngularDamping(float damping) = 0;
 	virtual void SetDamping(float linear, float angular) = 0;
+
+
+	virtual void SetSoftMargin(float val) = 0;
+	// CCD methods
+	virtual void SetCcdMotionThreshold(float val) = 0;
+	virtual void SetCcdSweptSphereRadius(float val) = 0;
+	
+	virtual void SetSoftLinStiff(float val) = 0;// Sets linear stiffness for soft body.
+	virtual void SetSoftAngStiff(float val) = 0;// Sets angular stiffness for soft body.
+	virtual void SetSoftVolume(float val) = 0;// Sets volume for soft body.
+	virtual void SetSoftVsRigidHardness(float val) = 0;// sets soft vs rigid hardness
+	virtual void SetSoftVsKineticHardness(float val) = 0;// sets soft vs kinetic hardness
+
+
+	virtual void SetSoftVsSoftHardness(float val) = 0;
+	virtual void SetSoftVsRigidImpulseSplitCluster(float val) = 0;
+	virtual void SetSoftVsKineticImpulseSplitCluster(float val) = 0;
+	virtual void SetSoftVsSoftImpulseSplitCluster(float val) = 0;
+	virtual void SetVelocitiesCorrectionFactor(float val) = 0;
+	virtual void SetDampingCoefficient(float val) = 0;
+	virtual void SetDragCoefficient(float val) = 0;
+	virtual void SetLiftCoefficient(float val) = 0;
+	virtual void SetPressureCoefficient(float val) = 0;
+	virtual void SetVolumeConversationCoefficient(float val) = 0;
+	virtual void SetDynamicFrictionCoefficient(float val) = 0;
+	virtual void SetPoseMatchingCoefficient(float val) = 0;
+	virtual void SetRigidContactsHardness(float val) = 0;
+	virtual void SetKineticContactsHardness(float val) = 0;
+	virtual void SetSoftContactsHardness(float val) = 0;
+	virtual void SetAnchorsHardness(float val) = 0;
+
+
+	virtual void SetVelocitySolverIterations(int iterations) = 0;
+    virtual void SetPositionSolverIterations(int iterations) = 0;
+    virtual void SetDriftSolverIterations(int iterations) = 0;
+    virtual void SetClusterSolverIterations(int iterations) = 0;
+    virtual void SetSoftPoseMatching(bool enableShapeMatching) = 0;
+
+
+
+
+
 	virtual void SetGravity(const mt::vec3 &gravity) = 0;
 
 	virtual void RefreshCollisions() = 0;
@@ -154,6 +196,7 @@ public:
 
 	virtual bool ReinstancePhysicsShape(KX_GameObject *from_gameobj, RAS_Mesh *from_meshobj, bool dupli = false) = 0;
 	virtual bool ReplacePhysicsShape(PHY_IPhysicsController *phyctrl) = 0;
+	
 };
 
 #endif  /* __PHY_IPHYSICSCONTROLLER_H__ */

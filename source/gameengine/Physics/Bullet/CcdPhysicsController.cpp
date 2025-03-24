@@ -419,7 +419,7 @@ bool CcdPhysicsController::CreateSoftbody()
 			ft->m_tag = (void *)((uintptr_t)(i + 1));
 		}
 	}
-	if (m_cci.m_margin > 0.0f) {
+	if (m_cci.m_margin > -10.0f) {
 		psb->getCollisionShape()->setMargin(m_cci.m_margin);
 		psb->updateBounds();
 	}
@@ -1435,6 +1435,327 @@ void CcdPhysicsController::SetDamping(float linear, float angular)
 
 	body->setDamping(linear, angular);
 }
+
+void CcdPhysicsController::SetSoftMargin(float val) {
+    // set soft body margin
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->getCollisionShape()->setMargin(val);
+    softBody->updateBounds();
+    softBody->m_bUpdateRtCst = true;
+}
+
+
+void CcdPhysicsController::SetCcdMotionThreshold(float ccd_motion_threshold)
+{
+  btRigidBody *body = GetRigidBody();
+  if (!body)
+    return;
+
+  body->setCcdMotionThreshold(ccd_motion_threshold);
+}
+
+void CcdPhysicsController::SetCcdSweptSphereRadius(float ccd_swept_sphere_radius)
+{
+  btRigidBody *body = GetRigidBody();
+  if (!body)
+    return;
+
+  body->setCcdSweptSphereRadius(ccd_swept_sphere_radius);
+}
+
+
+void CcdPhysicsController::SetSoftLinStiff(float linstiff)
+{// Sets linear stiffness for soft body
+	btSoftBody *softBody = GetSoftBody();
+	if (!softBody)
+		return;
+
+	if (softBody && softBody->m_materials.size() > 0) {
+		// Access the first material (or the material you want to modify)
+		btSoftBody::Material* material = softBody->m_materials[0];
+
+		if (material) {
+			material->m_kLST = linstiff;
+			softBody->m_bUpdateRtCst = true; // Update constraints
+		}
+	}
+}
+
+
+void CcdPhysicsController::SetSoftAngStiff(float angstiff)
+{// Sets angular stiffness for soft body
+	btSoftBody *softBody = GetSoftBody();
+	if (!softBody)
+		return;
+
+	if (softBody && softBody->m_materials.size() > 0) {
+		// Access the first material (or the material you want to modify)
+		btSoftBody::Material* material = softBody->m_materials[0];
+
+		if (material) {
+			material->m_kVST = angstiff;
+			softBody->m_bUpdateRtCst = true; // Update constraints
+		}
+	}
+}
+
+void CcdPhysicsController::SetSoftVolume(float volume)
+{// Sets volume for soft body
+	btSoftBody *softBody = GetSoftBody();
+	if (!softBody)
+		return;
+
+	if (softBody && softBody->m_materials.size() > 0) {
+		// Access the first material (or the material you want to modify)
+		btSoftBody::Material* material = softBody->m_materials[0];
+
+		if (material) {
+			material->m_kAST = volume;
+			softBody->m_bUpdateRtCst = true; // Update constraints
+		}
+	}
+}
+
+
+
+
+
+
+
+
+void CcdPhysicsController::SetSoftVsRigidHardness(float hardness)
+{// sets soft vs rigid hardness
+	btSoftBody *softBody = GetSoftBody();
+	if (!softBody)
+		return;
+
+	softBody->m_cfg.kSRHR_CL = hardness;
+	softBody->m_bUpdateRtCst = true; // Update constraints
+}
+
+void CcdPhysicsController::SetSoftVsKineticHardness(float hardness)
+{// sets soft vs Kinetic hardness
+	btSoftBody *softBody = GetSoftBody();
+	if (!softBody)
+		return;
+
+	softBody->m_cfg.kSKHR_CL = hardness;
+	softBody->m_bUpdateRtCst = true; // Update constraints
+}
+
+
+
+
+void CcdPhysicsController::SetSoftVsSoftHardness(float hardness) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kSSHR_CL = hardness;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetSoftVsRigidImpulseSplitCluster(float split) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kSR_SPLT_CL = split;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetSoftVsKineticImpulseSplitCluster(float split) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kSK_SPLT_CL = split;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetSoftVsSoftImpulseSplitCluster(float split) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kSS_SPLT_CL = split;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetVelocitiesCorrectionFactor(float factor) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kVCF = factor;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetDampingCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kDP = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetDragCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kDG = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetLiftCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kLF = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetPressureCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kPR = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetVolumeConversationCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kVC = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetDynamicFrictionCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kDF = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetPoseMatchingCoefficient(float coefficient) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kMT = coefficient;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetRigidContactsHardness(float hardness) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kCHR = hardness;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetKineticContactsHardness(float hardness) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kKHR = hardness;
+    softBody->m_bUpdateRtCst = true;
+}
+
+void CcdPhysicsController::SetSoftContactsHardness(float hardness) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kSHR = hardness;
+    softBody->m_bUpdateRtCst = true;
+}
+
+
+
+
+
+
+void CcdPhysicsController::SetAnchorsHardness(float val) {
+    // Anchors hardness [0,1]
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.kAHR = val;
+    softBody->m_bUpdateRtCst = true;
+}
+
+
+
+
+
+void CcdPhysicsController::SetVelocitySolverIterations(int iterations) {
+    // Velocity solver iterations
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.viterations = iterations;
+}
+
+void CcdPhysicsController::SetPositionSolverIterations(int iterations) {
+    // Position solver iterations
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.piterations = iterations;
+}
+
+void CcdPhysicsController::SetDriftSolverIterations(int iterations) {
+    // Drift solver iterations
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.diterations = iterations;
+}
+
+void CcdPhysicsController::SetClusterSolverIterations(int iterations) {
+    // Cluster solver iterations
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    softBody->m_cfg.citerations = iterations;
+}
+
+
+
+void CcdPhysicsController::SetSoftPoseMatching(bool enableShapeMatching) {
+    btSoftBody* softBody = GetSoftBody();
+    if (!softBody)
+        return;
+
+    if (enableShapeMatching) {
+        softBody->setPose(false, true); // Shape matching enabled: disable pose update, relative pose.
+    } else {
+        softBody->setPose(true, false); // Shape matching disabled: enable pose update, absolute pose.
+    }
+}
+
+
+
+
 
 // reading out information from physics
 mt::vec3 CcdPhysicsController::GetLinearVelocity()

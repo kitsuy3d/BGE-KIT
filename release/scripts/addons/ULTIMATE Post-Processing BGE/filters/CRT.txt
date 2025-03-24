@@ -1,0 +1,103 @@
+// CRT Effect Shader for Blender Game Engine
+uniform sampler2D bgl_RenderedTexture;
+uniform float bgl_RenderedTextureWidth;
+uniform float bgl_RenderedTextureHeight;
+uniform float timer;
+uniform float scanlines_opacity = 0.4;
+uniform float scanlines_width = 0.25;
+uniform float grille_opacity = 0.3;
+uniform float roll_speed = 8.0;
+uniform float roll_size = 15.0;
+uniform float roll_variation = 1.8;
+uniform float distort_intensity = 0.04;
+uniform float noise_opacity = 0.4;
+uniform float noise_speed = 5.0;
+uniform float static_noise_intensity = 0.06;
+uniform float aberration = 0.01;
+uniform float brightness = 1.4;
+uniform float vignette_intensity = 0.4;
+uniform float warp_amount = 1.0;
+uniform float vignette_opacity = 0.5;
+
+// Border parameters
+uniform float border_thickness = 0.018;  // Thickness of the black border
+uniform float border_softness = 0.01;   // Softness for the transition from black to image
+
+vec2 random(vec2 uv) {
+    uv = vec2(dot(uv, vec2(127.1, 311.7)), dot(uv, vec2(269.5, 183.3)));
+    return fract(sin(uv) * 43758.5453123);
+}
+
+float noise(vec2 uv) {
+    vec2 i = floor(uv);
+    vec2 f = fract(uv);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(dot(random(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+                   dot(random(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+               mix(dot(random(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+                   dot(random(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+}
+
+vec2 warp(vec2 uv) {
+    vec2 delta = uv - 0.5;
+    float delta2 = dot(delta.xy, delta.xy);
+    float delta4 = delta2 * delta2;
+    return uv + delta * delta4 * warp_amount;
+}
+
+float vignette(vec2 uv) {
+    uv *= 1.0 - uv.xy;
+    float vig = uv.x * uv.y * 15.0;
+    return pow(vig, vignette_intensity * vignette_opacity);
+}
+
+// Black border mask function
+float borderMask(vec2 uv) {
+    float dist_to_edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+    return smoothstep(border_thickness, border_thickness + border_softness, dist_to_edge);
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight);
+    
+    // Warp the coordinates for all subsequent effects, including border
+    vec2 warped_uv = warp(uv);
+    //vec2 roll_uv = vec2(0.0);
+    
+    
+    // Rolling effect
+    float roll_line = smoothstep(0.3, 0.9, sin(warped_uv.y * roll_size - (timer * roll_speed)));
+    roll_line *= roll_line * smoothstep(0.3, 0.9, sin(warped_uv.y * roll_size * roll_variation - (timer * roll_speed * roll_variation)));
+    vec2 roll_uv = vec2((roll_line * distort_intensity * (1.0 - warped_uv.x)), 0.0);
+
+    vec4 color;
+    color.r = texture2D(bgl_RenderedTexture, warped_uv + roll_uv * 0.8 + vec2(aberration, 0.0) * 0.1).r;
+    color.g = texture2D(bgl_RenderedTexture, warped_uv + roll_uv * 1.2 - vec2(aberration, 0.0) * 0.1).g;
+    color.b = texture2D(bgl_RenderedTexture, warped_uv + roll_uv).b;
+    color.a = 1.0;
+
+    // Scanlines effect
+    float scanlines = 0.5;
+    scanlines = smoothstep(scanlines_width, scanlines_width + 0.5, abs(sin(uv.y * (bgl_RenderedTextureHeight * 3.14159265))));
+    color.rgb = mix(color.rgb, color.rgb * vec3(scanlines), scanlines_opacity); 
+
+    // Noise effect
+    float noise_val = smoothstep(0.4, 0.5, noise(warped_uv * vec2(2.0, 200.0) + vec2(10.0, (timer * noise_speed))));
+    roll_line *= noise_val * scanlines * clamp(random((floor(warped_uv * vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight)) / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight)) + vec2(timer * 0.8, 0.0)).x + 0.8, 0.0, 1.0);
+    color.rgb = clamp(mix(color.rgb, color.rgb + roll_line, noise_opacity), vec3(0.0), vec3(1.0));
+
+    // Static noise effect
+    color.rgb += clamp(random((floor(warped_uv * vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight)) / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight)) + fract(timer)).x, 0.0, 1.0) * static_noise_intensity;
+
+    // Brightness adjustment
+    color.rgb *= brightness;
+
+    // Apply vignette
+    color.rgb *= vignette(warped_uv);
+
+    // Apply the border mask using the warped coordinates to wrap it
+    color.rgb *= borderMask(warped_uv);  // Darken the border after warping
+
+    gl_FragColor = color;
+}
+

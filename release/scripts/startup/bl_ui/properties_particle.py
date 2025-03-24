@@ -22,13 +22,12 @@ from bpy.types import Panel, Menu
 from rna_prop_ui import PropertyPanel
 from bpy.app.translations import pgettext_iface as iface_
 
-from .properties_physics_common import (
+from bl_ui.properties_physics_common import (
     point_cache_ui,
     effector_weights_ui,
     basic_force_field_settings_ui,
     basic_force_field_falloff_ui,
 )
-
 
 def particle_panel_enabled(context, psys):
     if psys is None:
@@ -141,9 +140,13 @@ class PARTICLE_PT_context_particles(ParticleButtonsPanel, Panel):
     def draw(self, context):
         layout = self.layout
 
-        if context.scene.render.engine == 'BLENDER_GAME':
-            layout.label("Not available in the Game Engine")
-            return
+        if context.user_preferences.view.use_pro_mode!=True:
+                layout.label("Available In Pro Mode")
+                return
+
+        #if context.scene.render.engine == 'BLENDER_GAME':
+        #    layout.label("Not available in the Game Engine")
+        #    return
 
         ob = context.object
         psys = context.particle_system
@@ -238,7 +241,7 @@ class PARTICLE_PT_context_particles(ParticleButtonsPanel, Panel):
 
 class PARTICLE_PT_emission(ParticleButtonsPanel, Panel):
     bl_label = "Emission"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -314,7 +317,7 @@ class PARTICLE_PT_emission(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_hair_dynamics(ParticleButtonsPanel, Panel):
     bl_label = "Hair Dynamics"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -412,7 +415,7 @@ class PARTICLE_PT_hair_dynamics(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_cache(ParticleButtonsPanel, Panel):
     bl_label = "Cache"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -442,7 +445,7 @@ class PARTICLE_PT_cache(ParticleButtonsPanel, Panel):
 
 class PARTICLE_PT_velocity(ParticleButtonsPanel, Panel):
     bl_label = "Velocity"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -485,7 +488,7 @@ class PARTICLE_PT_velocity(ParticleButtonsPanel, Panel):
             row.prop(part, "object_factor", slider=True)
         row.prop(part, "factor_random")
 
-        # if part.type=='REACTOR':
+        #if part.type=='REACTOR':
         #    sub.prop(part, "reactor_factor")
         #    sub.prop(part, "reaction_shape", slider=True)
 
@@ -493,7 +496,7 @@ class PARTICLE_PT_velocity(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_rotation(ParticleButtonsPanel, Panel):
     bl_label = "Rotation"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -556,7 +559,7 @@ class PARTICLE_PT_rotation(ParticleButtonsPanel, Panel):
 
 class PARTICLE_PT_physics(ParticleButtonsPanel, Panel):
     bl_label = "Physics"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -581,6 +584,10 @@ class PARTICLE_PT_physics(ParticleButtonsPanel, Panel):
         layout.row().prop(part, "physics_type", expand=True)
 
         row = layout.row()
+        col = row.column(align=True)
+        col.prop(part, "particle_size")
+        col.prop(part, "size_random", slider=True)
+
         if part.physics_type != 'NO':
             col = row.column(align=True)
             col.prop(part, "mass")
@@ -624,7 +631,7 @@ class PARTICLE_PT_physics(ParticleButtonsPanel, Panel):
                 split = layout.split()
 
                 col = split.column()
-                col.label(text="Fluid Properties:")
+                col.label(text="Fluid properties:")
                 col.prop(fluid, "stiffness", text="Stiffness")
                 col.prop(fluid, "linear_viscosity", text="Viscosity")
                 col.prop(fluid, "buoyancy", text="Buoyancy", slider=True)
@@ -745,7 +752,7 @@ class PARTICLE_PT_physics(ParticleButtonsPanel, Panel):
             if part.physics_type == 'BOIDS':
                 layout.label(text="Relations:")
             elif part.physics_type == 'FLUID':
-                layout.label(text="Fluid Interaction:")
+                layout.label(text="Fluid interaction:")
 
             row = layout.row()
             row.template_list("UI_UL_list", "particle_targets", psys, "targets",
@@ -792,7 +799,7 @@ class PARTICLE_PT_physics(ParticleButtonsPanel, Panel):
 
 class PARTICLE_PT_boidbrain(ParticleButtonsPanel, Panel):
     bl_label = "Boid Brain"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -815,7 +822,7 @@ class PARTICLE_PT_boidbrain(ParticleButtonsPanel, Panel):
 
         # Currently boids can only use the first state so these are commented out for now.
         #row = layout.row()
-        # row.template_list("UI_UL_list", "particle_boids", boids, "states",
+        #row.template_list("UI_UL_list", "particle_boids", boids, "states",
         #                  boids, "active_boid_state_index", compact="True")
         #col = row.row()
         #sub = col.row(align=True)
@@ -895,7 +902,7 @@ class PARTICLE_PT_boidbrain(ParticleButtonsPanel, Panel):
 
 class PARTICLE_PT_render(ParticleButtonsPanel, Panel):
     bl_label = "Render"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -1077,7 +1084,7 @@ class PARTICLE_PT_render(ParticleButtonsPanel, Panel):
             col = row.column()
             col.prop(part, "trail_count")
             if part.trail_count > 1:
-                col.prop(part, "use_absolute_path_time", text="Length in Frames")
+                col.prop(part, "use_absolute_path_time", text="Length in frames")
                 col = row.column()
                 col.prop(part, "path_end", text="Length", slider=not part.use_absolute_path_time)
                 col.prop(part, "length_random", text="Random", slider=True)
@@ -1085,8 +1092,7 @@ class PARTICLE_PT_render(ParticleButtonsPanel, Panel):
                 col = row.column()
                 col.label(text="")
 
-        if part.type == 'EMITTER' or \
-           (part.render_type in {'OBJECT', 'GROUP'} and part.type == 'HAIR'):
+        if part.render_type in {'OBJECT', 'GROUP'} and not part.use_advanced_hair:
             row = layout.row(align=True)
             row.prop(part, "particle_size")
             row.prop(part, "size_random", slider=True)
@@ -1095,7 +1101,7 @@ class PARTICLE_PT_render(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_draw(ParticleButtonsPanel, Panel):
     bl_label = "Display"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -1158,7 +1164,7 @@ class PARTICLE_PT_draw(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_children(ParticleButtonsPanel, Panel):
     bl_label = "Children"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -1198,12 +1204,6 @@ class PARTICLE_PT_children(ParticleButtonsPanel, Panel):
         col.label(text="Effects:")
 
         sub = col.column(align=True)
-        if part.child_type == 'SIMPLE':
-            sub.prop(part, "twist")
-            sub.prop(part, "use_twist_curve")
-            if part.use_twist_curve:
-                sub.template_curve_mapping(part, "twist_curve")
-
         sub.prop(part, "use_clump_curve")
         if part.use_clump_curve:
             sub.template_curve_mapping(part, "clump_curve")
@@ -1293,7 +1293,7 @@ class PARTICLE_PT_children(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_field_weights(ParticleButtonsPanel, Panel):
     bl_label = "Field Weights"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -1314,7 +1314,7 @@ class PARTICLE_PT_field_weights(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_force_fields(ParticleButtonsPanel, Panel):
     bl_label = "Force Field Settings"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     def draw(self, context):
         layout = self.layout
@@ -1348,7 +1348,7 @@ class PARTICLE_PT_force_fields(ParticleButtonsPanel, Panel):
 class PARTICLE_PT_vertexgroups(ParticleButtonsPanel, Panel):
     bl_label = "Vertex Groups"
     bl_options = {'DEFAULT_CLOSED'}
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
@@ -1391,10 +1391,6 @@ class PARTICLE_PT_vertexgroups(ParticleButtonsPanel, Panel):
         row.prop_search(psys, "vertex_group_roughness_end", ob, "vertex_groups", text="Roughness End")
         row.prop(psys, "invert_vertex_group_roughness_end", text="", toggle=True, icon='ARROW_LEFTRIGHT')
 
-        row = col.row(align=True)
-        row.prop_search(psys, "vertex_group_twist", ob, "vertex_groups", text="Twist")
-        row.prop(psys, "invert_vertex_group_twist", text="", toggle=True, icon='ARROW_LEFTRIGHT')
-
         # Commented out vertex groups don't work and are still waiting for better implementation
         # row = layout.row()
         # row.prop_search(psys, "vertex_group_velocity", ob, "vertex_groups", text="Velocity")
@@ -1418,7 +1414,7 @@ class PARTICLE_PT_vertexgroups(ParticleButtonsPanel, Panel):
 
 
 class PARTICLE_PT_custom_props(ParticleButtonsPanel, PropertyPanel, Panel):
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
     _context_path = "particle_system.settings"
     _property_type = bpy.types.ParticleSettings
 
@@ -1441,7 +1437,7 @@ classes = (
     PARTICLE_PT_field_weights,
     PARTICLE_PT_force_fields,
     PARTICLE_PT_vertexgroups,
-    PARTICLE_PT_custom_props,
+    #PARTICLE_PT_custom_props,
 )
 
 if __name__ == "__main__":  # only for live edit.

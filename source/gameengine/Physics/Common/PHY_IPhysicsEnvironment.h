@@ -106,7 +106,8 @@ public:
 	{
 	}
 	/// Perform an integration step of duration 'timeStep'.
-	virtual bool ProceedDeltaTime(double curTime, float timeStep, float interval) = 0;
+	virtual void ProceedDeltaTime(float timeStep, float interval) = 0;
+	//virtual void ProceedDeltaTimeCar(float timeStep, float interval) = 0;
 	/// draw debug lines (make sure to call this during the render phase, otherwise lines are not drawn properly)
 	virtual void DebugDrawWorld()
 	{
@@ -122,7 +123,43 @@ public:
 	{
 	}
 	/// setNumIterations set the number of iterations for iterative solvers
-	virtual void SetNumIterations(int numIter)
+	virtual void SetNumIterations(int numIterations)
+	{
+	}
+	/// setErp // splitImpulse penetration depth before for use, used if ccdMode is on.
+	virtual void SetErp(float erp)
+	{
+	}
+	/// setErp2 // splitImpulse penetration depth before for use, used if ccdMode is off.
+	virtual void SetErp2(float erp2)
+	{
+	}
+	/// setGlobalCfm constraint force mixing for contacts and non-contacts
+	virtual void SetGlobalCfm(float globalCfm)
+	{
+	}
+	/// setSplitImpulse // by default, Bullet solves positional constraints and velocity constraints coupled together.
+	virtual void SetSplitImpulse(bool splitImpulse)
+	{
+	}
+	/// setSplitImpulsePenetrationThreshold // Penetration Threshold before splitImpulse is used.
+	virtual void SetSplitImpulsePenetrationThreshold(float splitImpulsePenetrationThreshold)
+	{
+	}
+	/// setSplitImpulseTurnErp // constraints fix for splitImpulse.
+	virtual void SetSplitImpulseTurnErp(float splitImpulseTurnErp)
+	{
+	}
+	/// setLinearSlop // Defines the penetration depth for object collisions.
+	virtual void SetLinearSlop(float slop)
+	{
+	}
+	/// setWarmstartingFactor Defines how much of the previous impulse is used for the next calculation step. A value of zero will turn off warmstarting a value of 1 will use the original value.
+	virtual void SetWarmstartingFactor(float factor)
+	{
+	}
+	/// setMaxGyroscopicForce it is only used for 'explicit' version of gyroscopic force.
+	virtual void SetMaxGyroscopicForce(float maxGyroscopicForce)
 	{
 	}
 	/// setNumTimeSubSteps set the number of divisions of the timestep. Tradeoff quality versus performance.

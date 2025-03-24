@@ -227,18 +227,9 @@ void RAS_Mesh::EndConversion(RAS_BoundingBoxManager *boundingBoxManager)
 		RAS_DisplayArray *array = meshmat->GetDisplayArray();
 
 		const std::string materialname = meshmat->GetBucket()->GetMaterial()->GetName();
-		if (array->GetVertexCount() == 0) {
-			CM_Warning("mesh \"" << m_name << "\" has no vertices for material \"" << materialname
-			                     << "\". It introduces performance decrease for empty render.");
-		}
-		else {
+		if (array->GetVertexCount() != 0) {
 			// Generate bounding box only for non-empty display arrays.
 			arrayList.push_back(array);
-		}
-
-		if (array->GetPrimitiveIndexCount() == 0) {
-			CM_Warning("mesh \"" << m_name << "\" has no primitives for material \"" << materialname
-			                     << "\". It introduces performance decrease for empty render.");
 		}
 	}
 
@@ -254,8 +245,8 @@ void RAS_Mesh::EndConversion(RAS_BoundingBoxManager *boundingBoxManager)
 
 	// Construct polygon range info.
 	unsigned int startIndex = 0;
-	for (unsigned short i = 0, size = m_materials.size(); i < size; ++i) {
-		RAS_MeshMaterial *meshmat = m_materials[i];
+	for (m_i = 0, m_size = m_materials.size(); m_i < m_size; ++m_i) {
+		RAS_MeshMaterial *meshmat = m_materials[m_i];
 		RAS_DisplayArray *array = meshmat->GetDisplayArray();
 		const unsigned indexCount = array->GetTriangleIndexCount();
 		if (indexCount == 0) {
@@ -271,7 +262,7 @@ void RAS_Mesh::EndConversion(RAS_BoundingBoxManager *boundingBoxManager)
 			 (mat->IsCollider()) ? PolygonInfo::COLLIDER : PolygonInfo::NONE |
 			 (mat->IsTwoSided()) ? PolygonInfo::TWOSIDE : PolygonInfo::NONE);
 
-		m_polygonRanges.push_back({array, startIndex, endIndex, flags, i});
+		m_polygonRanges.push_back({array, startIndex, endIndex, flags, m_i});
 
 		// Update absolute start array index for the next array.
 		startIndex += indexCount;

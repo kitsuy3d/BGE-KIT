@@ -4607,9 +4607,9 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	};
 
 	static const EnumPropertyItem vsync_items[] = {
-		{VSYNC_OFF, "OFF", 0, "Off", "Disable vsync"},
-		{VSYNC_ON, "ON", 0, "On", "Enable vsync"},
-		{VSYNC_ADAPTIVE, "ADAPTIVE", 0, "Adaptive", "Enable adaptive vsync (if supported)"},
+		{VSYNC_OFF, "OFF", 0, "Off", "Disable vsync, 1 Python: render.VSYNC_OFF"},
+		{VSYNC_ON, "ON", 0, "On", "Enable vsync, 0 Python: render.VSYNC_ON"},
+		{VSYNC_ADAPTIVE, "ADAPTIVE", 0, "Adaptive", "Enable adaptive vsync (if supported), 2 Python: render.VSYNC_ADAPTIVE"},
 		{0, NULL, 0, NULL, NULL}
 	};
 
@@ -4629,30 +4629,30 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_int_sdna(prop, NULL, "xplay");
 	RNA_def_property_range(prop, 4, 10000);
 	RNA_def_property_int_default(prop, 640);
-	RNA_def_property_ui_text(prop, "Resolution X", "Number of horizontal pixels in the screen");
+	RNA_def_property_ui_text(prop, "Resolution X", "Number of horizontal pixels in the rendered image, Python: render.getWindowWidth(), render.setWindowWidth(1920)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "resolution_y", PROP_INT, PROP_PIXEL);
 	RNA_def_property_int_sdna(prop, NULL, "yplay");
 	RNA_def_property_range(prop, 4, 10000);
 	RNA_def_property_int_default(prop, 480);
-	RNA_def_property_ui_text(prop, "Resolution Y", "Number of vertical pixels in the screen");
+	RNA_def_property_ui_text(prop, "Resolution Y", "Number of vertical pixels in the rendered image, render.getWindowHeight(), render.setWindowHeight(1080)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "vsync", PROP_ENUM, PROP_NONE);
 	RNA_def_property_enum_sdna(prop, NULL, "vsync");
 	RNA_def_property_enum_items(prop, vsync_items);
-	RNA_def_property_ui_text(prop, "Vsync", "Change vsync settings");
+	RNA_def_property_ui_text(prop, "Vsync", "Change vsync settings, Python: render.setVsync(1), render.getVsync()");
 
 	prop = RNA_def_property(srna, "samples", PROP_ENUM, PROP_NONE);
 	RNA_def_property_enum_sdna(prop, NULL, "aasamples");
 	RNA_def_property_enum_items(prop, aasamples_items);
-	RNA_def_property_ui_text(prop, "AA Samples", "The number of AA Samples to use for MSAA");
+	RNA_def_property_ui_text(prop, "AA Samples", "The number of AA Samples to use for MSAA, 0-2-4-8-16 Python: render.setAntiAliasing(16)");
 
 	prop = RNA_def_property(srna, "hdr", PROP_ENUM, PROP_NONE);
 	RNA_def_property_enum_sdna(prop, NULL, "hdr");
 	RNA_def_property_enum_items(prop, hdr_items);
-	RNA_def_property_ui_text(prop, "HDR", "The precision of screen display");
+	RNA_def_property_ui_text(prop, "HDR", "The precision of screen display, Python: render.HDR_NONE, render.HDR_HALF_FLOAT, render.HDR_FULL_FLOAT");
 
 	prop = RNA_def_property(srna, "depth", PROP_INT, PROP_UNSIGNED);
 	RNA_def_property_int_sdna(prop, NULL, "depth");
@@ -4685,7 +4685,7 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_UI_EVENTS);
 	RNA_def_property_enum_default(prop, ESCKEY);
 	RNA_def_property_enum_funcs(prop, NULL, "rna_GameSettings_exit_key_set", NULL);
-	RNA_def_property_ui_text(prop, "Exit Key", "The key that exits the Game Engine");
+	RNA_def_property_ui_text(prop, "Exit Key", "Exit key, Python: logic.getExitKey(), logic.setExitKey(bge.events.ESCKEY)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	/* Do we need it here ? (since we already have it in World */
@@ -4698,12 +4698,12 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "show_fullscreen", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "playerflag", GAME_PLAYER_FULLSCREEN);
-	RNA_def_property_ui_text(prop, "Fullscreen", "Start player in a new fullscreen display");
+	RNA_def_property_ui_text(prop, "", "Full Screen Display, Python: render.getFullScreen(), render.setFullScreen(1)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "use_desktop", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "playerflag", GAME_PLAYER_DESKTOP_RESOLUTION);
-	RNA_def_property_ui_text(prop, "Desktop", "Use the current desktop resolution in fullscreen mode");
+	RNA_def_property_ui_text(prop, "", "Use Desktop Screen Size, Sets render.setWindowWidth(640) and render.setWindowHeight(480) to the Desktop Resolution");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	/* Framing */
@@ -4756,7 +4756,7 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_range(prop, 0.0, 10000.0);
 	RNA_def_property_float_default(prop, 9.8f);
 	RNA_def_property_ui_text(prop, "Physics Gravity",
-	                         "Gravitational constant used for physics simulation in the game engine");
+	                         "Gravitational constant force used for physics objects in the game engine, Python: constraints.setGravity(0.0, 0.0, -9.81) or logic.setGravity(0.0, 0.0, -9.81), every Game object has it's own.gravity = 0.0, 0.0, -9.81");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "physics_solver", PROP_ENUM, PROP_NONE);
@@ -4769,7 +4769,7 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_range(prop, 128.0, 1024.0);
 	RNA_def_property_int_default(prop, 128);
 	RNA_def_property_ui_text(prop, "Occlusion Resolution",
-	                         "Size of the occlusion buffer, use higher value for better precision (slower)");
+	                         "Size of the occlusion buffer, use higher value for better precision (slower), Occlusion... it's cost is more then it saves");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "fps", PROP_INT, PROP_NONE);
@@ -4777,39 +4777,38 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_ui_range(prop, 1, 60, 1, 1);
 	RNA_def_property_range(prop, 1, 10000);
 	RNA_def_property_int_default(prop, 60);
-	RNA_def_property_ui_text(prop, "Frames Per Second",
+	RNA_def_property_ui_text(prop, "Logic Frames Per Second",
 	                         "Nominal number of game frames per second "
-	                         "(physics fixed timestep = 1/fps, independently of actual frame rate)");
+	                         "(Game has a fixed timestep = 1/fps, independently of physics-logic frame rate), Python: logic.getLogicTicRate(), logic.setLogicTicRate(60.0)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
-	prop = RNA_def_property(srna, "logic_step_max", PROP_INT, PROP_NONE);
+	prop = RNA_def_property(srna, "sleep_timer", PROP_INT, PROP_NONE);
 	RNA_def_property_int_sdna(prop, NULL, "maxlogicstep");
 	RNA_def_property_range(prop, 1, 10000);
-	RNA_def_property_ui_range(prop, 1, 50, 1, 1);
+	RNA_def_property_ui_range(prop, 1, 10000, 1, 1);
 	RNA_def_property_int_default(prop, 5);
-	RNA_def_property_ui_text(prop, "Max Logic Steps",
-	                         "Maximum number of logic frame per game frame if graphics slows down the game, "
-	                         "higher value allows better synchronization with physics");
+	RNA_def_property_ui_text(prop, "Sleep Timer",
+	                         "Lowers the number of sleep times it can run per game logic frame, "
+	                         "higher value allows better cooling at the cost of frame rate synchronization, Python: logic.getMaxLogicFrame(), logic.setMaxLogicFrame(10000)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "physics_step_max", PROP_INT, PROP_NONE);
 	RNA_def_property_int_sdna(prop, NULL, "maxphystep");
-	RNA_def_property_range(prop, 1, 10000);
-	RNA_def_property_ui_range(prop, 1, 50, 1, 1);
-	RNA_def_property_int_default(prop, 5);
+	RNA_def_property_range(prop, 0, 1);
+	RNA_def_property_ui_range(prop, 0, 1, 1, 1);
+	RNA_def_property_int_default(prop, 1);
 	RNA_def_property_ui_text(prop, "Max Physics Steps",
-	                         "Maximum number of physics step per game frame if graphics slows down the game, "
-	                         "higher value allows physics to keep up with realtime");
+	                         "Shadows off but with shaders: 1+ on, 0 off, Python: logic.getMaxPhysicsFrame(), logic.setMaxPhysicsFrame(1)");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "physics_step_sub", PROP_INT, PROP_NONE);
 	RNA_def_property_int_sdna(prop, NULL, "physubstep");
 	RNA_def_property_range(prop, 1, 50);
-	RNA_def_property_ui_range(prop, 1, 5, 1, 1);
+	RNA_def_property_ui_range(prop, 1, 10, 1, 1);
 	RNA_def_property_int_default(prop, 1);
 	RNA_def_property_ui_text(prop, "Physics Sub Steps",
-	                         "Number of simulation substep per physic timestep, "
-	                         "higher value give better physics precision");
+	                         "Number of physics substep per timestep, "
+	                         "Python: constraints.setNumTimeSubSteps(60), logic.setPhysicsTicRate(60.0), logic.getPhysicsTicRate(), Tip: if physics updates are lower then logic physics stops");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "time_scale", PROP_FLOAT, PROP_NONE);
@@ -4818,7 +4817,8 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_range(prop, 0.001, 10000.0);
 	RNA_def_property_float_default(prop, 1.0f);
 	RNA_def_property_ui_text(prop, "Time Scale",
-	                         "Time scale to slow down or speed up animations and physics in game");
+	                         "Time scale to slow down or speed up animations and physics in game, "
+	                         "Python: logic.setTimeScale(1.0), logic.getTimeScale()");
 	RNA_def_property_update(prop, NC_SCENE, NULL);
 
 	prop = RNA_def_property(srna, "deactivation_linear_threshold", PROP_FLOAT, PROP_NONE);
@@ -4868,7 +4868,7 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "show_framerate_profile", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", GAME_SHOW_FRAMERATE);
 	RNA_def_property_ui_text(prop, "Show Framerate and Profile",
-	                         "Show framerate and profiling information while the game runs");
+	                         "Show framerate and profiling information while the game runs, logic.getAverageFrameRate(), logic.getProfileInfo()");
 
 	prop = RNA_def_property(srna, "show_render_queries", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", GAME_SHOW_RENDER_QUERIES);
@@ -4882,18 +4882,18 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "show_mouse", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", GAME_SHOW_MOUSE);
-	RNA_def_property_ui_text(prop, "Show Mouse", "Start player with a visible mouse cursor");
+	RNA_def_property_ui_text(prop, "Show Mouse", "Start player with a visible mouse cursor, Python: render.showMouse(1), render.setMousePosition(x, y)");
 
-	prop = RNA_def_property(srna, "use_frame_rate", PROP_BOOLEAN, PROP_NONE);
+	prop = RNA_def_property(srna, "use_frame_scale", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_negative_sdna(prop, NULL, "flag", GAME_ENABLE_ALL_FRAMES);
-	RNA_def_property_ui_text(prop, "Use Frame Rate",
-	                         "Respect the frame rate from the Physics panel in the world properties "
-	                         "rather than rendering as many frames as possible");
+	RNA_def_property_ui_text(prop, "Use Easy Frame Scale Mode",
+	                         "Turn off to use frame-scale using python "
+	                         "Python: bge.logic.setAnimationsScale(1.0), bge.logic.setPhysicsScale(0.5), bge.logic.setLogicScale(0.8)");
 
-	prop = RNA_def_property(srna, "use_deprecation_warnings", PROP_BOOLEAN, PROP_NONE);
+	prop = RNA_def_property(srna, "pro_mode", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_negative_sdna(prop, NULL, "flag", GAME_IGNORE_DEPRECATION_WARNINGS);
-	RNA_def_property_ui_text(prop, "Deprecation Warnings",
-	                         "Print warnings when using deprecated features in the python API");
+	RNA_def_property_ui_text(prop, "Pro Mode",
+	                         "Show Full Menu");
 
 	prop = RNA_def_property(srna, "use_auto_start", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_funcs(prop, "rna_GameSettings_auto_start_get", "rna_GameSettings_auto_start_set");
@@ -4903,7 +4903,7 @@ static void rna_def_scene_game_data(BlenderRNA *brna)
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", GAME_RESTRICT_ANIM_UPDATES);
 	RNA_def_property_ui_text(prop, "Restrict Animation Updates",
 	                         "Restrict the number of animation updates to the animation FPS (this is "
-	                         "better for performance, but can cause issues with smooth playback)");
+	                         "better for performance, but can cause issues with smooth playback), Python: bge.logic.setUseRestrictAnimations(True), bge.logic.getUseRestrictAnimations()");
 
 
 	prop = RNA_def_property(srna, "show_bounding_box", PROP_ENUM, PROP_NONE);
@@ -5960,7 +5960,7 @@ static void rna_def_scene_render_data(BlenderRNA *brna)
 	RNA_def_property_flag(prop, PROP_PROPORTIONAL);
 	RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
 	RNA_def_property_range(prop, 4, 65536);
-	RNA_def_property_ui_text(prop, "Resolution X", "Number of horizontal pixels in the rendered image");
+	RNA_def_property_ui_text(prop, "Resolution X", "Number of horizontal pixels in the rendered image, Python: render.getDisplayDimensions(), render.setDisplayDimensions()");
 	RNA_def_property_update(prop, NC_SCENE | ND_RENDER_OPTIONS, "rna_SceneCamera_update");
 
 	prop = RNA_def_property(srna, "resolution_y", PROP_INT, PROP_PIXEL);
@@ -5968,7 +5968,7 @@ static void rna_def_scene_render_data(BlenderRNA *brna)
 	RNA_def_property_flag(prop, PROP_PROPORTIONAL);
 	RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
 	RNA_def_property_range(prop, 4, 65536);
-	RNA_def_property_ui_text(prop, "Resolution Y", "Number of vertical pixels in the rendered image");
+	RNA_def_property_ui_text(prop, "Resolution Y", "Number of vertical pixels in the rendered image, Python: render.getDisplayDimensions(), render.setDisplayDimensions()");
 	RNA_def_property_update(prop, NC_SCENE | ND_RENDER_OPTIONS, "rna_SceneCamera_update");
 
 	prop = RNA_def_property(srna, "resolution_percentage", PROP_INT, PROP_PERCENTAGE);
@@ -6036,7 +6036,7 @@ static void rna_def_scene_render_data(BlenderRNA *brna)
 	RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
 	RNA_def_property_range(prop, 1, SHRT_MAX);
 	RNA_def_property_ui_range(prop, 1, 120, 1, -1);
-	RNA_def_property_ui_text(prop, "FPS", "Framerate, expressed in frames per second");
+	RNA_def_property_ui_text(prop, "FPS", "Framerate, expressed in frames per second, works best if lower then Logic rate, you can cap the max rander frames on the video card to sync the frames up");
 	RNA_def_property_update(prop, NC_SCENE | ND_RENDER_OPTIONS, "rna_Scene_fps_update");
 
 	prop = RNA_def_property(srna, "fps_base", PROP_FLOAT, PROP_NONE);
@@ -7060,7 +7060,7 @@ void RNA_def_scene(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "camera", PROP_POINTER, PROP_NONE);
 	RNA_def_property_flag(prop, PROP_EDITABLE);
 	RNA_def_property_pointer_funcs(prop, NULL, NULL, NULL, "rna_Camera_object_poll");
-	RNA_def_property_ui_text(prop, "Camera", "Active camera, used for rendering the scene");
+	RNA_def_property_ui_text(prop, "Camera", "Active camera, used for rendering the scene, Python: own.scene.active_camera = own.scene.cameras[0]");
 	RNA_def_property_update(prop, NC_SCENE | NA_EDITED, "rna_Scene_view3d_update");
 
 	prop = RNA_def_property(srna, "background_set", PROP_POINTER, PROP_NONE);
@@ -7105,7 +7105,7 @@ void RNA_def_scene(BlenderRNA *brna)
 	RNA_def_property_boolean_sdna(prop, NULL, "lay", 1);
 	RNA_def_property_array(prop, 20);
 	RNA_def_property_boolean_funcs(prop, NULL, "rna_Scene_layer_set");
-	RNA_def_property_ui_text(prop, "Layers", "Visible layers - Shift-Click/Drag to select multiple layers");
+	RNA_def_property_ui_text(prop, "Layers", "Visible layers - Shift-Click/Drag to select multiple layers, Python: own.layer = 1");
 	RNA_def_property_update(prop, NC_SCENE | ND_LAYER, "rna_Scene_layer_update");
 
 	/* active layer */

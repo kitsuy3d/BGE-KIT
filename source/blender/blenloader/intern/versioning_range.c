@@ -59,11 +59,3 @@
 #include "readfile.h"
 
 #include "MEM_guardedalloc.h"
-
-void blo_do_versions_range(FileData* fd, Library* lib, Main* main)
-{
-	//printf("Range: open file from version : %i, subversion : %i\n", main->rangeversionfile, main->rangesubversionfile);
-	if (!MAIN_VERSION_RANGE_ATLEAST(main, 1, 0)) {
-		printf("Upbge/bge file is now updated for Range Game Engine.\n");
-	}
-}

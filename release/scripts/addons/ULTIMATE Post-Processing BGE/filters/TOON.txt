@@ -1,0 +1,17 @@
+ uniform sampler2D bgl_RenderedTexture;
+    uniform sampler2D bgl_DepthTexture;
+
+    void main()
+    {
+       float depth = texture2D( bgl_DepthTexture, gl_TexCoord[0].xy).r;
+       float depth2 = texture2D( bgl_DepthTexture, gl_TexCoord[0].xy + vec2(0,0.002)).r;
+       float depth3 = texture2D( bgl_DepthTexture, gl_TexCoord[0].xy + vec2(0.002,0)).r;
+       
+       float fac = abs(depth-depth2) + abs(depth-depth3);
+       
+       float intensity = 300;
+
+       vec4 sub = vec4(fac*intensity,fac*intensity,fac*intensity,0);
+       
+       gl_FragColor = texture2D( bgl_RenderedTexture, gl_TexCoord[0].xy ) - sub;
+    }

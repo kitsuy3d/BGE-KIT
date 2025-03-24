@@ -3459,6 +3459,16 @@ static void rna_def_userdef_view(BlenderRNA *brna)
 	RNA_def_property_ui_text(prop, "Prompt Quit",
 	                         "Ask for confirmation when quitting through the window close button");
 
+	prop = RNA_def_property(srna, "use_pro_mode", PROP_BOOLEAN, PROP_NONE);
+	RNA_def_property_boolean_sdna(prop, NULL, "uiflag", USER_PRO_MODE);
+	RNA_def_property_ui_text(prop, "Pro Mode",
+	                         "Use Full Menu");
+
+	prop = RNA_def_property(srna, "use_startup_mode", PROP_BOOLEAN, PROP_NONE);
+	RNA_def_property_boolean_sdna(prop, NULL, "uiflag", USER_STARTUP_MODE);
+	RNA_def_property_ui_text(prop, "Startup Mode",
+	                         "Used to set the startup theme");
+
 	/* Toolbox click-hold delay */
 	prop = RNA_def_property(srna, "open_left_mouse_delay", PROP_INT, PROP_NONE);
 	RNA_def_property_int_sdna(prop, NULL, "tb_leftmouse");
@@ -4086,7 +4096,7 @@ static void rna_def_userdef_system(BlenderRNA *brna)
 	RNA_def_property_ui_text(prop, "Auto Run Python Scripts and Components",
 	                         "Allow any .blend file to run scripts automatically "
 	                         "(unsafe with blend files from an untrusted source)");
-	RNA_def_property_update(prop, 0, "rna_userdef_script_autoexec_update");
+	RNA_def_property_update(prop, 1, "rna_userdef_script_autoexec_update");
 
 	prop = RNA_def_property(srna, "use_tabs_as_spaces", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_negative_sdna(prop, NULL, "flag", USER_TXT_TABSTOSPACES_DISABLE);
@@ -4145,7 +4155,7 @@ static void rna_def_userdef_system(BlenderRNA *brna)
 	RNA_def_property_enum_default(prop, 1);
 	RNA_def_property_ui_text(prop, "Anisotropic Filter",
 	                         "Quality of the anisotropic filtering (values greater than 1.0 enable anisotropic "
-	                         "filtering)");
+	                         "filtering), Python: render.setAnisotropicFiltering(16)");
 	RNA_def_property_update(prop, 0, "rna_userdef_anisotropic_update");
 
 	prop = RNA_def_property(srna, "gl_texture_limit", PROP_ENUM, PROP_NONE);

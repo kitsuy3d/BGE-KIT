@@ -336,7 +336,7 @@ static void rna_def_sensor(BlenderRNA *brna)
 	RNA_def_property_boolean_sdna(prop, NULL, "tap", 1);
 	RNA_def_property_boolean_funcs(prop, NULL, "rna_Sensor_tap_set");
 	RNA_def_property_ui_text(prop, "Tap",
-	                         "Trigger controllers only for an instant, even while the sensor remains true");
+	                         "Trigger controllers only for an instant, even while the sensor remains true, Python: cont.sensors[0].positive gives true then false running two times");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "controllers", PROP_COLLECTION, PROP_NONE);

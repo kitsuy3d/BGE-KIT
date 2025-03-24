@@ -105,12 +105,12 @@ void LA_PlayerLauncher::RunPythonMainLoop(const std::string& pythonCode)
 
 RAS_Rasterizer::DrawType LA_PlayerLauncher::GetRasterizerDrawMode()
 {
-	const SYS_SystemHandle& syshandle = SYS_GetSystem();
-	const bool wireframe = SYS_GetCommandLineInt(syshandle, "wireframe", 0);
+	//const SYS_SystemHandle& syshandle = SYS_GetSystem();
+	//const bool wireframe = SYS_GetCommandLineInt(syshandle, "wireframe", 0);
 
-	if (wireframe) {
-		return RAS_Rasterizer::RAS_WIREFRAME;
-	}
+	//if (wireframe) {
+	//	return RAS_Rasterizer::RAS_WIREFRAME;
+	//}
 
 	return RAS_Rasterizer::RAS_TEXTURED;
 }
@@ -129,7 +129,7 @@ void LA_PlayerLauncher::InitEngine()
 	BKE_sound_init(m_maggie);
 	LA_Launcher::InitEngine();
 
-	m_rasterizer->PrintHardwareInfo();
+	//m_rasterizer->PrintHardwareInfo();
 }
 
 void LA_PlayerLauncher::ExitEngine()

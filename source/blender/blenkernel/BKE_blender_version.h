@@ -28,12 +28,12 @@
 /* Several breakages with 270, e.g. constraint deg vs rad */
 #define BLENDER_MINVERSION      270
 #define BLENDER_MINSUBVERSION   6
-/* RANGE ENGINE: I think it's better not to change upbge versioning, to avoid incompatibility. */
+/* UPBGE2x: I think it's better not to change upbge versioning a lot, to avoid incompatibility, we use 0.2.6xxx. */
 #define UPBGE_VERSION           2
-#define UPBGE_SUBVERSION        5
-
-#define RANGE_VERSION			1
-#define RANGE_SUBVERSION		0
+#define UPBGE_SUBVERSION        6016
+/* UPBGE 0.2.6xxx: I think it's better not to change RanGE versioning, to avoid incompatibility. */
+#define RANGE_VERSION           1
+#define RANGE_SUBVERSION        0
 
 /* used by packaging tools */
 /* can be left blank, otherwise a,b,c... etc with no quotes */
@@ -42,7 +42,7 @@
 #define BLENDER_VERSION_CYCLE   alpha
 
 extern char versionstr[]; /* from blender.c */
-extern char upbge_versionstr[]; /* from blender.c */
 extern char range_versionstr[]; /* from blender.c */
+extern char upbge_versionstr[]; /* from blender.c */
 
 #endif  /* __BKE_BLENDER_VERSION_H__ */

@@ -20,7 +20,7 @@ subject to the following restrictions:
 */
 #include "btContactProcessing.h"
 
-#define MAX_COINCIDENT 8
+#define MAX_COINCIDENT 64 // was 8
 
 struct CONTACT_KEY_TOKEN
 {

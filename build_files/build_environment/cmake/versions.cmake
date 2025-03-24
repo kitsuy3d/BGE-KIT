@@ -74,11 +74,11 @@ set(FREETYPE_VERSION 2.9.1)
 set(FREETYPE_URI http://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz)
 set(FREETYPE_HASH 3adb0e35d3c100c456357345ccfa8056)
 
-set(GLEW_VERSION 1.13.0)
+set(GLEW_VERSION 2.1.0.0)
 set(GLEW_URI http://prdownloads.sourceforge.net/glew/glew/${GLEW_VERSION}/glew-${GLEW_VERSION}.tgz)
 set(GLEW_HASH 7cbada3166d2aadfc4169c4283701066)
 
-set(FREEGLUT_VERSION 3.0.0)
+set(FREEGLUT_VERSION 3.4.0)
 set(FREEGLUT_URI http://pilotfiber.dl.sourceforge.net/project/freeglut/freeglut/${FREEGLUT_VERSION}/freeglut-${FREEGLUT_VERSION}.tar.gz)
 set(FREEGLUT_HASH 90c3ca4dd9d51cf32276bc5344ec9754)
 
@@ -109,7 +109,7 @@ set(OPENSUBDIV_VERSION v3_3_3)
 set(OPENSUBDIV_Hash 29c79dc01ef616aab02670bed5544ddd)
 set(OPENSUBDIV_URI https://github.com/PixarAnimationStudios/OpenSubdiv/archive/${OPENSUBDIV_VERSION}.tar.gz)
 
-set(SDL_VERSION 2.0.8)
+set(SDL_VERSION 2.30.1.0)
 set(SDL_URI https://www.libsdl.org/release/SDL2-${SDL_VERSION}.tar.gz)
 set(SDL_HASH 3800d705cef742c6a634f202c37f263f)
 
@@ -143,7 +143,7 @@ set(OSL_VERSION 1.9.9)
 set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.tar.gz)
 set(OSL_HASH 44ad511e424965a10fce051a053b0605)
 
-set(PYTHON_VERSION 3.7.0)
+set(PYTHON_VERSION 3.7.17)
 set(PYTHON_SHORT_VERSION 3.7)
 set(PYTHON_SHORT_VERSION_NO_DOTS 37)
 set(PYTHON_URI https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz)

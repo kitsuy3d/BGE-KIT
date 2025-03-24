@@ -439,7 +439,7 @@ static void stats_string(Scene *scene)
 	s = stats->infostr;
 	ofs = 0;
 
-	ofs += BLI_snprintf(s + ofs, MAX_INFO_LEN - ofs, "RanGE %s | ", range_versionstr);
+	ofs += BLI_snprintf(s + ofs, MAX_INFO_LEN - ofs, "");
 
 	if (scene->obedit) {
 		if (BKE_keyblock_from_object(scene->obedit))

@@ -186,6 +186,7 @@ enum {
 /* On write, restore paths after editing them (G_FILE_RELATIVE_REMAP) */
 #define G_FILE_SAVE_COPY         (1 << 27)
 #define G_FILE_GLSL_NO_ENV_LIGHTING (1 << 28)
+#define G_FILE_SAVE_COPY_PROTECTED  (1 << 29)
 
 #define G_FILE_FLAGS_RUNTIME (G_FILE_NO_UI | G_FILE_RELATIVE_REMAP | G_FILE_MESH_COMPAT | G_FILE_SAVE_COPY)
 

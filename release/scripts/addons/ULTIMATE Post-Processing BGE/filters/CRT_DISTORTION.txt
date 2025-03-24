@@ -1,0 +1,25 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform vec2 bgl_TextureCoordinateOffset[9];
+
+void main()
+{
+    vec4 sum = vec4(0.0);
+    
+    // Sample surrounding pixels
+    for (int i = 0; i < 9; ++i)
+    {
+        sum += texture2D(bgl_RenderedTexture, gl_TexCoord[0].st + bgl_TextureCoordinateOffset[i]);
+    }
+    
+    // Average the sampled pixels to blur
+    vec4 blurred = sum / 9.0;
+    
+    // Apply CRT distortion (adjust as needed)
+    float distortion = 0.006;
+    vec2 uv = gl_TexCoord[0].st;
+    uv += distortion * vec2(sin(uv.x - 5.0), cos(uv.x - 5.5));
+    vec4 crtDistorted = texture2D(bgl_RenderedTexture, uv);
+    
+    // Combine blurred and CRT-distorted images
+    gl_FragColor = mix(blurred, crtDistorted, 0.5);
+}

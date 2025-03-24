@@ -123,6 +123,7 @@ SCA_ISensor::sensortype SCA_ISensor::GetSensorType()
 
 void SCA_ISensor::Suspend()
 {
+	m_state = false;// set sensor to false
 	m_suspended = true;
 }
 

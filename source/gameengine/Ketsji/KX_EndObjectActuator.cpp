@@ -92,7 +92,7 @@ void KX_EndObjectActuator::Replace_IScene(SCA_IScene *val)
 	m_scene = static_cast<KX_Scene *>(val);
 }
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 
 /* ------------------------------------------------------------------------- */
 /* Python functions : integration hooks                                      */
@@ -128,6 +128,6 @@ PyAttributeDef KX_EndObjectActuator::Attributes[] = {
 	EXP_PYATTRIBUTE_NULL    //Sentinel
 };
 
-#endif // WITH_PYTHON
+//#endif // WITH_PYTHON
 
 /* eof */

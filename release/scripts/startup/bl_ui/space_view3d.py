@@ -126,6 +126,9 @@ class VIEW3D_HT_header(Header):
         row.operator("render.opengl", text="", icon='RENDER_STILL')
         row.operator("render.opengl", text="", icon='RENDER_ANIMATION').animation = True
 
+        row.operator("wm.window_fullscreen_toggle", icon='FULLSCREEN_ENTER')
+        row.template_ID(context.window, "screen", new="screen.new", unlink="screen.delete")
+        row.template_ID(context.screen, "scene", new="scene.new", unlink="scene.delete")
         # Pose
         if obj and mode == 'POSE':
             row = layout.row(align=True)

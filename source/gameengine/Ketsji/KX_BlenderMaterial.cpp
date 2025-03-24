@@ -953,7 +953,6 @@ EXP_PYMETHODDEF_DOC(KX_BlenderMaterial, setBlending, "setBlending(bge.logic.src,
 
 EXP_PYMETHODDEF_DOC(KX_BlenderMaterial, getTextureBindcode, "getTextureBindcode(texslot)")
 {
-	EXP_ShowDeprecationWarning("material.getTextureBindcode(texslot)", "material.textures[texslot].bindCode");
 	unsigned int texslot;
 	if (!PyArg_ParseTuple(args, "i:texslot", &texslot)) {
 		PyErr_SetString(PyExc_ValueError, "material.getTextureBindcode(texslot): KX_BlenderMaterial, expected an int.");

@@ -281,12 +281,12 @@ bool BL_SkinDeformer::UpdateInternal(bool shape_applied, bool recalcNormal)
 
 		m_armobj->ApplyPose();
 
-		if (m_armobj->GetVertDeformType() == ARM_VDEF_BGE_CPU) {
-			BGEDeformVerts(recalcNormal);
-		}
-		else {
-			BlenderDeformVerts(recalcNormal);
-		}
+		//if (m_armobj->GetVertDeformType() == ARM_VDEF_BGE_CPU) {
+		BGEDeformVerts(recalcNormal);
+		//}
+		//else {
+		//	BlenderDeformVerts(recalcNormal);
+		//}
 
 		/* Update the current frame */
 		m_lastArmaUpdate = m_armobj->GetLastFrame();

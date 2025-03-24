@@ -45,7 +45,7 @@ DummyPhysicsEnvironment::~DummyPhysicsEnvironment()
 	//destroy physicsengine data
 }
 
-bool DummyPhysicsEnvironment::ProceedDeltaTime(double curTime, float timeStep, float interval)
+void DummyPhysicsEnvironment::ProceedDeltaTime(float timeStep, float interval)
 {
 	//step physics simulation, typically perform
 
@@ -53,9 +53,20 @@ bool DummyPhysicsEnvironment::ProceedDeltaTime(double curTime, float timeStep, f
 	//solve constraints
 	//integrate solution
 	// return true if an update was done.
-	return true;
+	//return true;
 }
+/*
+void DummyPhysicsEnvironment::ProceedDeltaTimeCar(float timeStep, float interval)
+{
+	//step physics simulation, typically perform
 
+	//collision detection
+	//solve constraints
+	//integrate solution
+	// return true if an update was done.
+	//return true;
+}
+*/
 void DummyPhysicsEnvironment::SetFixedTimeStep(bool useFixedTimeStep, float fixedTimeStep)
 {
 }

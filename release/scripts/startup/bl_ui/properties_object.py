@@ -45,6 +45,7 @@ class OBJECT_PT_context_object(ObjectButtonsPanel, Panel):
 
 class OBJECT_PT_transform(ObjectButtonsPanel, Panel):
     bl_label = "Transform"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -335,7 +336,10 @@ class OBJECT_PT_motion_paths(MotionPathButtonsPanel, Panel):
 
     @classmethod
     def poll(cls, context):
-        return (context.object)
+        userpref = context.user_preferences
+        view = userpref.view
+        if view.use_pro_mode==True:
+            return (context.object)
 
     def draw(self, context):
         # layout = self.layout
@@ -369,13 +373,13 @@ class OBJECT_PT_custom_props(ObjectButtonsPanel, PropertyPanel, Panel):
 
 classes = (
     OBJECT_PT_context_object,
-    OBJECT_PT_transform,
-    OBJECT_PT_delta_transform,
-    OBJECT_PT_transform_locks,
     OBJECT_PT_relations,
     OBJECT_PT_relations_extras,
     GROUP_MT_specials,
     OBJECT_PT_groups,
+    OBJECT_PT_transform,
+    OBJECT_PT_delta_transform,
+    OBJECT_PT_transform_locks,
     OBJECT_PT_display,
     OBJECT_PT_duplication,
     OBJECT_PT_motion_paths,

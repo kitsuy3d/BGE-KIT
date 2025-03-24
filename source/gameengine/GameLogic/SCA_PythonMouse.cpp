@@ -98,8 +98,6 @@ PyObject *SCA_PythonMouse::pyattr_get_events(EXP_PyObjectPlus *self_v, const EXP
 {
 	SCA_PythonMouse *self = static_cast<SCA_PythonMouse *>(self_v);
 
-	EXP_ShowDeprecationWarning("mouse.events", "mouse.inputs");
-
 	for (int i = SCA_IInputDevice::BEGINMOUSE; i <= SCA_IInputDevice::ENDMOUSE; i++)
 	{
 		SCA_InputEvent& input = self->m_mouse->GetInput((SCA_IInputDevice::SCA_EnumInputs)i);
@@ -144,8 +142,6 @@ PyObject *SCA_PythonMouse::pyattr_get_inputs(EXP_PyObjectPlus *self_v, const EXP
 PyObject *SCA_PythonMouse::pyattr_get_active_events(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	SCA_PythonMouse *self = static_cast<SCA_PythonMouse *>(self_v);
-
-	EXP_ShowDeprecationWarning("mouse.active_events", "mouse.activeInputs");
 
 	PyDict_Clear(self->m_event_dict);
 

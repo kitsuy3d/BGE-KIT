@@ -69,14 +69,14 @@ class KX_ObstacleSimulation;
 class KX_CollisionContactPointList;
 struct bAction;
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 /* utility conversion function */
 bool ConvertPythonToGameObject(SCA_LogicManager *logicmgr, PyObject *value, KX_GameObject **object, bool py_none_ok, const char *error_prefix);
-#endif
+//#endif
 
-#ifdef USE_MATHUTILS
+//#ifdef USE_MATHUTILS
 void KX_GameObject_Mathutils_Callback_Init(void);
-#endif
+//#endif
 
 /**
  * KX_GameObject is the main class for dynamic objects.
@@ -92,9 +92,10 @@ public:
 		enum Flag {
 			ACTIVITY_NONE = 0,
 			ACTIVITY_PHYSICS = (1 << 0),
-			ACTIVITY_PHYSICS_SLEEPVELOCITY = (1 << 1),
-			ACTIVITY_LOGIC = (1 << 2),
-			ACTIVITY_LOGIC_COMPONENTS = (1 << 3)
+			//ACTIVITY_PHYSICS_SLEEPVELOCITY = (1 << 1),
+			ACTIVITY_LOGIC = (1 << 1)
+			//ACTIVITY_LOGIC_COMPONENTS = (1 << 3)
+			//ACTIVITY_PHYSICS_LOW = (1 << 4)
 		} m_flags;
 
 		/// Squared physics culling radius.
@@ -107,11 +108,13 @@ protected:
 
 	KX_ClientObjectInfo m_clientInfo;
 	std::string							m_name;
-	int									m_layer;
-	short m_passIndex;
+	unsigned short						m_layer;
+	unsigned short m_passIndex;
 	std::vector<KX_Mesh *>		m_meshes;
 	KX_LodManager						*m_lodManager;
-	short								m_currentLodLevel;
+	float							m_distance2;
+	unsigned short 							m_i;
+	unsigned short								m_currentLodLevel;
 	RAS_MeshUser						*m_meshUser;
 	/// Info about blender object convert from.
 	BL_ConvertObjectInfo *m_convertInfo;
@@ -121,7 +124,13 @@ protected:
 	// visible = user setting
 	// culled = while rendering, depending on camera
 	bool       							m_bVisible; 
+	bool       							m_bRender;
+	bool       							m_bCulledPhysics;
 	bool								m_bOccluder;
+	bool								m_halfAnimations;
+	bool								m_bDoAnimations;
+	//int 								m_bOutTime;
+
 
 	/// Object activity culling settings converted from blender objects.
 	ActivityCullingInfo m_activityCullingInfo;
@@ -166,7 +175,7 @@ public:
 	 */
 	static KX_GameObject* GetClientObject(KX_ClientObjectInfo* info);
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	// Python attributes that wont convert into EXP_Value
 	//
 	// there are 2 places attributes can be stored, in the EXP_Value,
@@ -184,7 +193,7 @@ public:
 	//
 	PyObject*							m_attr_dict;
 	PyObject*							m_collisionCallbacks;
-#endif
+//#endif
 
 	virtual void	/* This function should be virtual - derived classed override it */
 	Relink(
@@ -620,6 +629,53 @@ public:
 	virtual void	SetLinearDamping(float damping);
 	virtual void	SetAngularDamping(float damping);
 	virtual void	SetDamping(float linear, float angular);
+	// Sets Soft Body Margin.
+	virtual void	SetSoftMargin(float val);
+	// CCD methods
+	virtual void	setCcdMotionThreshold(float motion_threshold);
+	virtual void	setCcdSweptSphereRadius(float swept_sphere_radius);
+
+	// Sets linear stiffness for soft body.
+	virtual void SetSoftLinStiff(float lin_stiff);
+	// Sets angular stiffness for soft body.
+	virtual void SetSoftAngStiff(float ang_stiff);
+	// Sets angular stiffness for soft body.
+	virtual void SetSoftVolume(float volume);
+
+
+
+	// sets soft vs rigid hardness
+	virtual void SetSoftVsRigidHardness(float hardness);
+	// sets soft vs kinetic hardness
+	virtual void SetSoftVsKineticHardness(float hardness);
+
+
+	virtual void SetSoftVsSoftHardness(float val);
+	virtual void SetSoftVsRigidImpulseSplitCluster(float val);
+	virtual void SetSoftVsKineticImpulseSplitCluster(float val);
+	virtual void SetSoftVsSoftImpulseSplitCluster(float val);
+	virtual void SetVelocitiesCorrectionFactor(float val);
+	virtual void SetDampingCoefficient(float val);
+	virtual void SetDragCoefficient(float val);
+	virtual void SetLiftCoefficient(float val);
+	virtual void SetPressureCoefficient(float val);
+	virtual void SetVolumeConversationCoefficient(float val);
+	virtual void SetDynamicFrictionCoefficient(float val);
+	virtual void SetPoseMatchingCoefficient(float val);
+	virtual void SetRigidContactsHardness(float val);
+	virtual void SetKineticContactsHardness(float val);
+	virtual void SetSoftContactsHardness(float val);
+	virtual void SetAnchorsHardness(float val);
+
+	virtual void SetVelocitySolverIterations(int iterations); // Velocity solver iterations
+	virtual void SetPositionSolverIterations(int iterations); // Position solver iterations
+	virtual void SetDriftSolverIterations(int iterations); // Drift solver iterations
+	virtual void SetClusterSolverIterations(int iterations); // Cluster solver iterations
+	virtual void SetSoftPoseMatching(bool enableShapeMatching); // Shape matching enabled: disable pose update, relative pose.
+
+
+
+
 
 	/**
 	 * Update the physics object transform based upon the current SG_Node
@@ -704,7 +760,7 @@ public:
 	RAS_MeshUser *GetMeshUser() const;
 
 	/// Return true when the object can be rendered.
-	bool Renderable(int layer) const;
+	bool Renderable(unsigned short layer) const;
 
 	/**
 	 * Was this object marked visible? (only for the explicit
@@ -723,6 +779,22 @@ public:
 		bool b,
 		bool recursive
 	);
+
+		bool
+	GetPhysics(
+		void
+	);
+
+		bool
+	GetDoAnimations(
+		void
+	);
+
+	void
+	SetHalfAnimations(
+		bool a
+	);
+	
 
 	/**
 	 * Is this object an occluder?
@@ -758,8 +830,8 @@ public:
 		void
 	);
 
-	void SetPassIndex(short index);
-	short GetPassIndex() const;
+	void SetPassIndex(unsigned short index);
+	unsigned short GetPassIndex() const;
 
 	/// Allow auto updating bounding volume box.
 	inline void SetAutoUpdateBounds(bool autoUpdate)
@@ -838,7 +910,8 @@ public:
 
 	KX_Scene*	GetScene();
 
-#ifdef WITH_PYTHON
+
+//#ifdef WITH_PYTHON
 	/**
 	 * \section Python interface functions.
 	 */
@@ -854,12 +927,49 @@ public:
 	EXP_PYMETHOD_VARARGS(KX_GameObject,SetAngularVelocity);
 	EXP_PYMETHOD_VARARGS(KX_GameObject,GetVelocity);
 	EXP_PYMETHOD_VARARGS(KX_GameObject,SetDamping);
+	EXP_PYMETHOD_VARARGS(KX_GameObject,SetSoftMargin);
+
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetCcdMotionThreshold);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetCcdSweptSphereRadius);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftLinStiff);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftAngStiff);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVolume);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsRigidHardness);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsKineticHardness);
+
+
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsSoftHardness);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsRigidImpulseSplitCluster);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsKineticImpulseSplitCluster);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftVsSoftImpulseSplitCluster);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetVelocitiesCorrectionFactor);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetDampingCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetDragCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetLiftCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetPressureCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetVolumeConversationCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetDynamicFrictionCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetPoseMatchingCoefficient);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetRigidContactsHardness);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetKineticContactsHardness);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftContactsHardness);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetAnchorsHardness);
+
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetVelocitySolverIterations);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetPositionSolverIterations);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetDriftSolverIterations);
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetClusterSolverIterations);
+	
+	EXP_PYMETHOD_VARARGS(KX_GameObject, SetSoftPoseMatching);
+	
 
 	EXP_PYMETHOD_NOARGS(KX_GameObject,GetReactionForce);
 
 
 	EXP_PYMETHOD_NOARGS(KX_GameObject,GetVisible);
 	EXP_PYMETHOD_VARARGS(KX_GameObject,SetVisible);
+	EXP_PYMETHOD_VARARGS(KX_GameObject,SetHalfAnimations);
+	EXP_PYMETHOD_NOARGS(KX_GameObject,GetPhysics);
 	EXP_PYMETHOD_VARARGS(KX_GameObject,SetOcclusion);
 	EXP_PYMETHOD_NOARGS(KX_GameObject,GetState);
 	EXP_PYMETHOD_O(KX_GameObject,SetState);
@@ -888,6 +998,7 @@ public:
 	EXP_PYMETHOD_DOC(KX_GameObject,rayCast);
 	EXP_PYMETHOD_DOC_O(KX_GameObject,getDistanceTo);
 	EXP_PYMETHOD_DOC_O(KX_GameObject,getVectTo);
+	EXP_PYMETHOD_DOC_O(KX_GameObject,getTurnTo);
 	EXP_PYMETHOD_DOC(KX_GameObject, sendMessage);
 	EXP_PYMETHOD(KX_GameObject, ReinstancePhysicsMesh);
 	EXP_PYMETHOD_O(KX_GameObject, ReplacePhysicsShape);
@@ -931,16 +1042,18 @@ public:
 	static int			pyattr_set_layer(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject*	pyattr_get_visible(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_visible(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
+	static int			pyattr_set_halfanimations(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject*	pyattr_get_culled(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
+	static PyObject*	pyattr_get_culled_physics(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_cullingBox(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_physicsCulling(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_physicsCulling(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
-	static PyObject*	pyattr_get_physicsSleepVelocityCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef);
-	static int			pyattr_set_physicsSleepVelocityCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef, PyObject* value);
+	//static PyObject*	pyattr_get_physicsSleepVelocityCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef);
+	//static int			pyattr_set_physicsSleepVelocityCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef, PyObject* value);
 	static PyObject*	pyattr_get_logicCulling(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_logicCulling(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
-	static PyObject*	pyattr_get_logicComponentsCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef);
-	static int			pyattr_set_logicComponentsCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef, PyObject* value);
+	//static PyObject*	pyattr_get_logicComponentsCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef);
+	//static int			pyattr_set_logicComponentsCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef, PyObject* value);
 	static PyObject*	pyattr_get_physicsCullingRadius(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_physicsCullingRadius(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject*	pyattr_get_logicCullingRadius(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
@@ -1001,6 +1114,9 @@ public:
 	static int			pyattr_set_angularDamping(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
 	static PyObject*	pyattr_get_lodManager(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static int			pyattr_set_lodManager(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
+	//static PyObject*	pyattr_get_physicsLow(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
+	//static int			pyattr_set_physicsLow(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value);
+
 
 	static PyObject*	pyattr_get_sensors(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
 	static PyObject*	pyattr_get_controllers(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef);
@@ -1021,7 +1137,7 @@ public:
 	/* getitem/setitem */
 	static PyMappingMethods	Mapping;
 	static PySequenceMethods	Sequence;
-#endif
+//#endif
 };
 
 

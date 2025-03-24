@@ -1,0 +1,26 @@
+// Reflective Water Shader
+uniform sampler2D bgl_RenderedTexture;  // Input texture
+uniform float timer;                    // Time for animation
+uniform float bgl_RenderedTextureWidth; // Screen width
+uniform float bgl_RenderedTextureHeight;// Screen height
+uniform float waveHeight = 0.05;         // Height of the waves
+uniform float reflectivity = 1;          // Reflectivity of the surface
+
+void main()
+{
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight);
+
+    // Calculate wave distortion
+    float wave = sin(uv.x * 10.0 + timer * 5.0) * waveHeight;
+    vec2 distortedUV = uv + vec2(0.0, wave);
+
+    // Get the reflected color
+    vec4 reflectedColor = texture2D(bgl_RenderedTexture, distortedUV);
+
+    // Blend with the original color based on reflectivity
+    vec4 originalColor = texture2D(bgl_RenderedTexture, uv);
+    vec4 finalColor = mix(originalColor, reflectedColor, reflectivity);
+
+    // Output the final color
+    gl_FragColor = finalColor;
+}

@@ -86,6 +86,8 @@ protected:
 	/// Ignore updates?
 	bool m_suspended;
 
+	unsigned int m_culledstate;
+
 	/// Init state of object (used when object is created).
 	unsigned int m_initState;
 

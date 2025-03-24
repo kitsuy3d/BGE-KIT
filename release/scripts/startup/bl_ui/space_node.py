@@ -158,8 +158,11 @@ class NODE_MT_add(bpy.types.Menu):
         layout = self.layout
 
         layout.operator_context = 'INVOKE_DEFAULT'
-        props = layout.operator("node.add_search", text="Search ...")
-        props.use_transform = True
+        snode = context.space_data
+        if snode.tree_type != 'BGELogicTree': # fix me
+            props = layout.operator("node.add_search", text="Search ...")
+            props.use_transform = True
+        else:pass
 
         # actual node submenus are defined by draw functions from node categories
         nodeitems_utils.draw_node_categories_menu(self, context)

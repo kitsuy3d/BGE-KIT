@@ -51,7 +51,7 @@ static void rna_Lamp_buffer_size_set(PointerRNA *ptr, int value)
 {
 	Lamp *la = (Lamp *)ptr->data;
 
-	CLAMP(value, 128, 10240);
+	CLAMP(value, 128, 32768);
 	la->bufsize = value;
 	la->bufsize &= (~15); /* round to multiple of 16 */
 }
@@ -572,7 +572,7 @@ static void rna_def_lamp_shadow(StructRNA *srna, int spot, int area)
 
 	prop = RNA_def_property(srna, "shadow_buffer_size", PROP_INT, PROP_NONE);
 	RNA_def_property_int_sdna(prop, NULL, "bufsize");
-	RNA_def_property_range(prop, 128, 10240);
+	RNA_def_property_range(prop, 128, 32768);
 	RNA_def_property_ui_text(prop, "Shadow Buffer Size",
 	                         "Resolution of the shadow buffer, higher values give crisper shadows "
 	                         "but use more memory");
@@ -606,7 +606,7 @@ static void rna_def_lamp_shadow(StructRNA *srna, int spot, int area)
 
 	prop = RNA_def_property(srna, "shadow_buffer_clip_end", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "clipend");
-	RNA_def_property_range(prop, 0.0f, 9999.0f);
+	RNA_def_property_range(prop, 0.0f, 99999.0f);
 	RNA_def_property_ui_text(prop, "Shadow Buffer Clip End",
 	                         "Shadow map clip end, beyond which objects will not generate shadows");
 	RNA_def_property_update(prop, 0, "rna_Lamp_draw_update");

@@ -67,8 +67,23 @@ class DATA_PT_skeleton(ArmatureButtonsPanel, Panel):
 
         if context.scene.render.engine == 'BLENDER_GAME':
             col = layout.column()
-            col.label(text="Deform:")
-            col.prop(arm, "deform_method", expand=True)
+            if arm.deform_method != 'BGE_CPU':
+                row = col.row()
+                row.label(text="", icon='ERROR')
+                row.label(text="Blender")
+                row.label(text="Bones")
+                row.label(text="", icon='RENDER_ANIMATION')
+                row.prop(arm, "deform_method", expand=True)
+                row.label(text="Not Optimized:")
+
+            else:
+                row = col.row()
+                row.label(text="", icon='OUTLINER_OB_ARMATURE')
+                row.label(text="BGE")
+                row.label(text="Bones")
+                row.label(text="", icon='GAME')
+                row.prop(arm, "deform_method", expand=True)
+                row.label(text="Optimized:")
 
 
 class DATA_PT_display(ArmatureButtonsPanel, Panel):

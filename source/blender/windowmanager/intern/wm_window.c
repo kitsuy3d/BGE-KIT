@@ -494,15 +494,16 @@ void wm_window_title(wmWindowManager *wm, wmWindow *win)
 	}
 	else if (win->ghostwin) {
 		/* this is set to 1 if you don't have startup.blend open */
-		if (G.save_over && BKE_main_blendfile_path_from_global()[0]) {
-			char str[sizeof(((Main *)NULL)->name) + 24];
-			BLI_snprintf(str, sizeof(str), "Range Engine%s [%s%s]", wm->file_saved ? "" : "* (Unsaved)",
-			             BKE_main_blendfile_path_from_global(),
-			             G_MAIN->recovered ? " (Recovered)" : "");
-			GHOST_SetTitle(win->ghostwin, str);
-		}
-		else
-			GHOST_SetTitle(win->ghostwin, "Range Engine 1.0");
+		//if (G.save_over && BKE_main_blendfile_path_from_global()[0]) {
+		//	char str[sizeof(((Main *)NULL)->name) + 24];
+		//	BLI_snprintf(str, sizeof(str), "UPBGE%s [%s%s]", wm->file_saved ? "" : "* (Unsaved)",
+		//	             BKE_main_blendfile_path_from_global(),
+		//	             G_MAIN->recovered ? " (Recovered)" : "");
+		//	GHOST_SetTitle(win->ghostwin, str);
+		//}
+		//else
+		// kitsuy changed on 9-18-2024
+		GHOST_SetTitle(win->ghostwin, "blender");
 
 		/* Informs GHOST of unsaved changes, to set window modified visual indicator (MAC OS X)
 		 * and to give hint of unsaved changes for a user warning mechanism
@@ -710,7 +711,7 @@ void wm_window_ghostwindows_ensure(wmWindowManager *wm)
 				win->cursor = CURSOR_STD;
 			}
 
-			wm_window_ghostwindow_add(wm, "Blender", win);
+			wm_window_ghostwindow_add(wm, "blender", win);
 		}
 		/* happens after fileread */
 		if (win->eventstate == NULL)
@@ -874,13 +875,13 @@ wmWindow *WM_window_open_temp(bContext *C, int x, int y, int sizex, int sizey, i
 	ED_screen_refresh(CTX_wm_manager(C), win); /* test scale */
 
 	if (sa->spacetype == SPACE_IMAGE)
-		title = IFACE_("Blender Render");
+		title = IFACE_("UPBGE_Velocity_Engine_Render");
 	else if (ELEM(sa->spacetype, SPACE_OUTLINER, SPACE_USERPREF))
-		title = IFACE_("Blender User Preferences");
+		title = IFACE_("UPBGE_Velocity_Engine_User_Preferences");
 	else if (sa->spacetype == SPACE_FILE)
-		title = IFACE_("Blender File View");
+		title = IFACE_("UPBGE_Velocity_Engine_File_View");
 	else
-		title = "Blender";
+		title = "UPBGE_Velocity_Engine";
 
 	if (win->ghostwin) {
 		GHOST_SetTitle(win->ghostwin, title);
@@ -1492,15 +1493,17 @@ void wm_window_process_events(const bContext *C)
 	BLI_assert(BLI_thread_is_main());
 
 	hasevent = GHOST_ProcessEvents(g_system, 0); /* 0 is no wait */
-
+	//if (!(GHOST_ProcessEvents(g_system, 0)))
+	//	GHOST_DispatchEvents(g_system);
 	if (hasevent)
 		GHOST_DispatchEvents(g_system);
 
 	hasevent |= wm_window_timer(C);
 
 	/* no event, we sleep 5 milliseconds */
+	// kitsuy changed 9-22-2024
 	if (hasevent == 0)
-		PIL_sleep_ms(5);
+		PIL_sleep_ms(1);
 }
 
 void wm_window_process_events_nosleep(void)
@@ -1512,15 +1515,16 @@ void wm_window_process_events_nosleep(void)
 /* exported as handle callback to bke blender.c */
 void wm_window_testbreak(void)
 {
+	//changed by kitsuy 9-22-2024
 	static double ltime = 0;
 	double curtime = PIL_check_seconds_timer();
 
 	BLI_assert(BLI_thread_is_main());
 
-	/* only check for breaks every 50 milliseconds
+	/* only check for breaks every 50 milliseconds 0.05
 	 * if we get called more often.
 	 */
-	if ((curtime - ltime) > 0.05) {
+	if ((curtime - ltime) > 0.0005) {
 		int hasevent = GHOST_ProcessEvents(g_system, 0); /* 0 is no wait */
 
 		if (hasevent)

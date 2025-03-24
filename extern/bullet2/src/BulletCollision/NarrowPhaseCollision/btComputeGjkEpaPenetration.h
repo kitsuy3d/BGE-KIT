@@ -237,7 +237,7 @@ int	btComputeGjkEpaPenetration(const btConvexTemplate& a, const btConvexTemplate
             btScalar lenSqr =m_cachedSeparatingAxis.length2();
             
             //valid normal
-            if (lenSqr < 0.0001)
+            if (lenSqr < 0.0000001) // was 0.0001
             {
                 m_degenerateSimplex = 5;
             }

@@ -46,7 +46,8 @@ SCA_IObject::SCA_IObject()
 	:m_suspended(false),
 	m_initState(0),
 	m_state(0),
-	m_firstState(nullptr)
+	m_firstState(nullptr),
+	m_culledstate(0)
 {
 }
 
@@ -58,7 +59,8 @@ SCA_IObject::SCA_IObject(const SCA_IObject& other)
 	m_suspended(other.m_suspended),
 	m_initState(other.m_initState),
 	m_state(0),
-	m_firstState(other.m_firstState)
+	m_firstState(other.m_firstState),
+	m_culledstate(0)
 {
 	/* Registered objects and actuator are intentionally left empty.
 	 * A new object cannot be client of any actuator. */
@@ -243,6 +245,8 @@ void SCA_IObject::SuspendLogic()
 		for (SCA_ISensor *sensor : m_sensors) {
 			sensor->Suspend();
 		}
+		m_culledstate = m_state;
+		SetState(536870912);// set state 29
 	}
 }
 
@@ -254,6 +258,7 @@ void SCA_IObject::ResumeLogic()
 		for (SCA_ISensor *sensor : m_sensors) {
 			sensor->Resume();
 		}
+		SetState(m_culledstate);
 	}
 }
 

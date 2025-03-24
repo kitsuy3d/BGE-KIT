@@ -83,10 +83,10 @@
 #include "BLI_utildefines.h"
 #include "BLI_math.h"
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 #  include "EXP_PythonCallBack.h"
 #  include "python_utildefines.h"
-#endif
+//#endif
 
 // Component stuff
 #include "DNA_python_component_types.h"
@@ -96,14 +96,12 @@
 
 #include "KX_NodeRelationships.h"
 
-#include "BLI_math.h"
+//#include "BLI_math.h"
 
 #include "CM_Message.h"
 
 KX_GameObject::ActivityCullingInfo::ActivityCullingInfo()
-	:m_flags(ACTIVITY_NONE),
-	m_physicsRadius(0.0f),
-	m_logicRadius(0.0f)
+	: m_flags(ACTIVITY_NONE), m_physicsRadius(0.0f), m_logicRadius(0.0f)
 {
 }
 
@@ -113,11 +111,17 @@ KX_GameObject::KX_GameObject(void *sgReplicationInfo,
 	m_layer(0),
 	m_passIndex(0),
 	m_lodManager(nullptr),
+	m_distance2(0.0),
 	m_currentLodLevel(0),
 	m_meshUser(nullptr),
+	m_i(0),
+	m_halfAnimations(false),
+	m_bDoAnimations(true),
 	m_convertInfo(nullptr),
-	m_objectColor(mt::one4),
+	m_objectColor(1.0f, 1.0f, 1.0f, 1.0f),
 	m_bVisible(true),
+	m_bRender(true),
+	m_bCulledPhysics(false),
 	m_bOccluder(false),
 	m_autoUpdateBounds(false),
 	m_physicsController(nullptr),
@@ -127,10 +131,10 @@ KX_GameObject::KX_GameObject(void *sgReplicationInfo,
 	m_instanceObjects(nullptr),
 	m_dupliGroupObject(nullptr),
 	m_actionManager(nullptr)
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	, m_attr_dict(nullptr),
 	m_collisionCallbacks(nullptr)
-#endif
+//#endif
 {
 	// define the relationship between this node and it's parent.
 	KX_NormalParentRelation *parent_relation = new KX_NormalParentRelation();
@@ -145,11 +149,17 @@ KX_GameObject::KX_GameObject(const KX_GameObject& other)
 	m_passIndex(other.m_passIndex),
 	m_meshes(other.m_meshes),
 	m_lodManager(other.m_lodManager),
+	m_distance2(other.m_distance2),
 	m_currentLodLevel(0),
 	m_meshUser(nullptr),
+	m_i(0),
+	m_halfAnimations(other.m_halfAnimations),
+	m_bDoAnimations(other.m_bDoAnimations),
 	m_convertInfo(other.m_convertInfo),
 	m_objectColor(other.m_objectColor),
 	m_bVisible(other.m_bVisible),
+	m_bRender(other.m_bRender),
+	m_bCulledPhysics(other.m_bCulledPhysics),
 	m_bOccluder(other.m_bOccluder),
 	m_activityCullingInfo(other.m_activityCullingInfo),
 	m_autoUpdateBounds(other.m_autoUpdateBounds),
@@ -160,16 +170,16 @@ KX_GameObject::KX_GameObject(const KX_GameObject& other)
 	m_instanceObjects(nullptr),
 	m_dupliGroupObject(nullptr),
 	m_actionManager(nullptr)
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	, m_attr_dict(other.m_attr_dict),
 	m_collisionCallbacks(other.m_collisionCallbacks)
-#endif  // WITH_PYTHON
+//#endif  // WITH_PYTHON
 {
 	if (m_lodManager) {
 		m_lodManager->AddRef();
 	}
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	if (m_attr_dict) {
 		m_attr_dict = PyDict_Copy(m_attr_dict);
 	}
@@ -183,12 +193,12 @@ KX_GameObject::KX_GameObject(const KX_GameObject& other)
 			component->SetGameObject(this);
 		}
 	}
-#endif  // WITH_PYTHON
+//#endif  // WITH_PYTHON
 }
 
 KX_GameObject::~KX_GameObject()
 {
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	if (m_attr_dict) {
 		PyDict_Clear(m_attr_dict); /* in case of circular refs or other weird cases */
 		/* Py_CLEAR: Py_DECREF's and nullptr's */
@@ -204,7 +214,7 @@ KX_GameObject::~KX_GameObject()
 	if (m_components) {
 		m_components->Release();
 	}
-#endif // WITH_PYTHON
+//#endif // WITH_PYTHON
 
 	RemoveMeshes();
 
@@ -675,6 +685,216 @@ void KX_GameObject::SetDamping(float linear, float angular)
 	}
 }
 
+
+
+void KX_GameObject::SetSoftMargin(float val)
+{
+    // sets soft margin
+    if (m_physicsController)
+        m_physicsController->SetSoftMargin(val);
+}
+
+
+void KX_GameObject::setCcdMotionThreshold(float motion_threshold)
+{
+	if (m_physicsController)
+		m_physicsController->SetCcdMotionThreshold(motion_threshold);
+}
+
+void KX_GameObject::setCcdSweptSphereRadius(float swept_sphere_radius)
+{
+	if (m_physicsController)
+		m_physicsController->SetCcdSweptSphereRadius(swept_sphere_radius);
+}
+
+
+
+void KX_GameObject::SetSoftLinStiff(float lin_stiff)
+{	// Sets linear stiffness for soft body.
+	if (m_physicsController)
+		m_physicsController->SetSoftLinStiff(lin_stiff);
+}
+
+void KX_GameObject::SetSoftAngStiff(float ang_stiff)
+{	// Sets angular stiffness for soft body.
+	if (m_physicsController)
+		m_physicsController->SetSoftAngStiff(ang_stiff);
+}
+
+void KX_GameObject::SetSoftVolume(float volume)
+{	// Sets volume for soft body.
+	if (m_physicsController)
+		m_physicsController->SetSoftVolume(volume);
+}
+
+void KX_GameObject::SetSoftVsRigidHardness(float hardness)
+{	// sets soft vs rigid hardness
+	if (m_physicsController)
+		m_physicsController->SetSoftVsRigidHardness(hardness);
+}
+
+void KX_GameObject::SetSoftVsKineticHardness(float hardness)
+{	// sets soft vs kinetic hardness
+	if (m_physicsController)
+		m_physicsController->SetSoftVsKineticHardness(hardness);
+}
+
+void KX_GameObject::SetSoftVsSoftHardness(float hardness)
+{
+    // sets soft vs soft hardness
+    if (m_physicsController)
+        m_physicsController->SetSoftVsSoftHardness(hardness);
+}
+
+void KX_GameObject::SetSoftVsRigidImpulseSplitCluster(float val)
+{
+    // sets soft vs rigid impulse split cluster
+    if (m_physicsController)
+        m_physicsController->SetSoftVsRigidImpulseSplitCluster(val);
+}
+
+void KX_GameObject::SetSoftVsKineticImpulseSplitCluster(float val)
+{
+    // sets soft vs kinetic impulse split cluster
+    if (m_physicsController)
+        m_physicsController->SetSoftVsKineticImpulseSplitCluster(val);
+}
+
+void KX_GameObject::SetSoftVsSoftImpulseSplitCluster(float val)
+{
+    // sets soft vs soft impulse split cluster
+    if (m_physicsController)
+        m_physicsController->SetSoftVsSoftImpulseSplitCluster(val);
+}
+
+void KX_GameObject::SetVelocitiesCorrectionFactor(float val)
+{
+    // sets velocities correction factor
+    if (m_physicsController)
+        m_physicsController->SetVelocitiesCorrectionFactor(val);
+}
+
+void KX_GameObject::SetDampingCoefficient(float val)
+{
+    // sets damping coefficient
+    if (m_physicsController)
+        m_physicsController->SetDampingCoefficient(val);
+}
+
+void KX_GameObject::SetDragCoefficient(float val)
+{
+    // sets drag coefficient
+    if (m_physicsController)
+        m_physicsController->SetDragCoefficient(val);
+}
+
+void KX_GameObject::SetLiftCoefficient(float val)
+{
+    // sets lift coefficient
+    if (m_physicsController)
+        m_physicsController->SetLiftCoefficient(val);
+}
+
+void KX_GameObject::SetPressureCoefficient(float val)
+{
+    // sets pressure coefficient
+    if (m_physicsController)
+        m_physicsController->SetPressureCoefficient(val);
+}
+
+void KX_GameObject::SetVolumeConversationCoefficient(float val)
+{
+    // sets volume conversation coefficient
+    if (m_physicsController)
+        m_physicsController->SetVolumeConversationCoefficient(val);
+}
+
+void KX_GameObject::SetDynamicFrictionCoefficient(float val)
+{
+    // sets dynamic friction coefficient
+    if (m_physicsController)
+        m_physicsController->SetDynamicFrictionCoefficient(val);
+}
+
+void KX_GameObject::SetPoseMatchingCoefficient(float val)
+{
+    // sets pose matching coefficient
+    if (m_physicsController)
+        m_physicsController->SetPoseMatchingCoefficient(val);
+}
+
+void KX_GameObject::SetRigidContactsHardness(float val)
+{
+    // sets rigid contacts hardness
+    if (m_physicsController)
+        m_physicsController->SetRigidContactsHardness(val);
+}
+
+void KX_GameObject::SetKineticContactsHardness(float val)
+{
+    // sets kinetic contacts hardness
+    if (m_physicsController)
+        m_physicsController->SetKineticContactsHardness(val);
+}
+
+void KX_GameObject::SetSoftContactsHardness(float val)
+{
+    // sets soft contacts hardness
+    if (m_physicsController)
+        m_physicsController->SetSoftContactsHardness(val);
+}
+
+void KX_GameObject::SetAnchorsHardness(float val)
+{
+    // sets anchors hardness
+    if (m_physicsController)
+        m_physicsController->SetAnchorsHardness(val);
+}
+
+
+void KX_GameObject::SetVelocitySolverIterations(int iterations)
+{
+    // sets velocity solver iterations
+    if (m_physicsController)
+        m_physicsController->SetVelocitySolverIterations(iterations);
+}
+
+void KX_GameObject::SetPositionSolverIterations(int iterations)
+{
+    // sets position solver iterations
+    if (m_physicsController)
+        m_physicsController->SetPositionSolverIterations(iterations);
+}
+
+void KX_GameObject::SetDriftSolverIterations(int iterations)
+{
+    // sets drift solver iterations
+    if (m_physicsController)
+        m_physicsController->SetDriftSolverIterations(iterations);
+}
+
+void KX_GameObject::SetClusterSolverIterations(int iterations)
+{
+    // sets cluster solver iterations
+    if (m_physicsController)
+        m_physicsController->SetClusterSolverIterations(iterations);
+}
+
+
+void KX_GameObject::SetSoftPoseMatching(bool enableShapeMatching)
+{
+    // Shape matching enabled: disable pose update, relative pose.
+    if (m_physicsController)
+        m_physicsController->SetSoftPoseMatching(enableShapeMatching);
+}
+
+
+
+
+
+
+
+
 void KX_GameObject::ApplyForce(const mt::vec3& force, bool local)
 {
 	if (m_physicsController) {
@@ -723,9 +943,9 @@ void KX_GameObject::UpdateBlenderObjectMatrix(Object *blendobj)
 
 void KX_GameObject::AddMeshUser()
 {
-	for (size_t i = 0; i < m_meshes.size(); ++i) {
-		RAS_Deformer *deformer = BL_ConvertDeformer(this, m_meshes[i]);
-		m_meshUser = m_meshes[i]->AddMeshUser(&m_clientInfo, deformer);
+	for (m_i = 0; m_i < m_meshes.size(); ++m_i) {
+		RAS_Deformer *deformer = BL_ConvertDeformer(this, m_meshes[m_i]);
+		m_meshUser = m_meshes[m_i]->AddMeshUser(&m_clientInfo, deformer);
 
 		m_meshUser->SetMatrix(mt::mat4::FromAffineTransform(NodeGetWorldTransform()));
 		m_meshUser->SetFrontFace(!IsNegativeScaling());
@@ -789,9 +1009,9 @@ RAS_MeshUser *KX_GameObject::GetMeshUser() const
 	return m_meshUser;
 }
 
-bool KX_GameObject::Renderable(int layer) const
+bool KX_GameObject::Renderable(unsigned short layer) const
 {
-	return (m_meshUser != nullptr) && m_bVisible && (layer == 0 || m_layer & layer);
+	return (m_meshUser != nullptr) && m_bVisible && m_bRender && (layer == 0 || m_layer & layer);
 }
 
 void KX_GameObject::SetLodManager(KX_LodManager *lodManager)
@@ -827,8 +1047,8 @@ void KX_GameObject::UpdateLod(KX_Scene *scene, const mt::vec3& cam_pos, float lo
 		return;
 	}
 
-	const float distance2 = (NodeGetWorldPosition() - cam_pos).LengthSquared() * (lodfactor * lodfactor);
-	const KX_LodLevel& lodLevel = m_lodManager->GetLevel(scene, m_currentLodLevel, distance2);
+	m_distance2 = (NodeGetWorldPosition() - cam_pos).LengthSquared() * (lodfactor * lodfactor);
+	const KX_LodLevel& lodLevel = m_lodManager->GetLevel(scene, m_currentLodLevel, m_distance2);
 
 	KX_Mesh *mesh = lodLevel.GetMesh();
 	if (mesh != m_meshes.front()) {
@@ -840,32 +1060,73 @@ void KX_GameObject::UpdateLod(KX_Scene *scene, const mt::vec3& cam_pos, float lo
 
 void KX_GameObject::UpdateActivity(float distance)
 {
-	// Manage physics culling.
-	if (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS) {
-		if (distance > m_activityCullingInfo.m_physicsRadius) {
-			if (m_physicsController != nullptr && (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS_SLEEPVELOCITY) && m_physicsController->GetLinearVelocity().Length()) {
-				return;
-			}
-			SuspendPhysics(false);
-		}
-		else {
-			RestorePhysics();
-		}
-	}
-
 	// Manage logic culling.
 	if (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_LOGIC) {
 		if (distance > m_activityCullingInfo.m_logicRadius) {
+			if (!(m_bRender)) {
+				return;
+			}
 			SuspendLogic();
 			if (m_actionManager) {
 				m_actionManager->Suspend();
 			}
+			m_bRender = false;
+			m_cullingNode.SetCulled(true);
+			return;
 		}
 		else {
+			if (m_bRender) {
+				return;
+			}
 			ResumeLogic();
 			if (m_actionManager) {
 				m_actionManager->Resume();
 			}
+			m_bRender = true;
+			return;
+		}
+	}
+
+	if (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS) {
+		if (distance > m_activityCullingInfo.m_physicsRadius) {
+			if (!(m_bRender)) {
+				return;
+			}
+			//if (m_physicsController != nullptr && (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS_SLEEPVELOCITY) && m_physicsController->GetLinearVelocity().Length()) {
+			//	return;
+			//}
+			SuspendPhysics(false);
+			SuspendLogic();
+			//if (m_actionManager) {
+			//	m_actionManager->Suspend();
+			//}
+			m_bRender = false;
+			m_cullingNode.SetCulled(true);
+			m_bCulledPhysics = true;
+			return;
+		}
+		else {
+			//if ((m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS_LOW) && !m_bCulledPhysics){
+			//	SuspendPhysics(false);
+			//	SuspendLogic();
+				//if (m_actionManager) {
+				//	m_actionManager->Suspend();
+				//}
+			//	return;
+			//}
+			//else {
+			if (m_bRender) {
+				return;
+			}
+			RestorePhysics();
+			ResumeLogic();
+			m_bRender = true;
+			m_bCulledPhysics = false;
+			//if (m_actionManager) {
+			//	m_actionManager->Resume();
+			//}
+			return;
+			//}
 		}
 	}
 }
@@ -908,6 +1169,30 @@ bool KX_GameObject::GetVisible(void)
 {
 	return m_bVisible;
 }
+
+bool KX_GameObject::GetPhysics(void)
+{
+	return m_bCulledPhysics;
+}
+
+
+bool KX_GameObject::GetDoAnimations(void)
+{
+	// so we can half objects animations.
+	if (!m_bDoAnimations) {
+		m_bDoAnimations = true;
+	}
+	else if (m_halfAnimations) {
+		m_bDoAnimations = false;
+	}
+	return m_bDoAnimations;
+}
+
+void KX_GameObject::SetHalfAnimations(bool a)
+{
+	m_halfAnimations = a;
+}
+
 
 static void setVisible_recursive(SG_Node *node, bool v)
 {
@@ -1017,12 +1302,12 @@ int KX_GameObject::GetLayer(void)
 	return m_layer;
 }
 
-void KX_GameObject::SetPassIndex(short index)
+void KX_GameObject::SetPassIndex(unsigned short index)
 {
 	m_passIndex = index;
 }
 
-short KX_GameObject::GetPassIndex() const
+unsigned short KX_GameObject::GetPassIndex() const
 {
 	return m_passIndex;
 }
@@ -1469,6 +1754,8 @@ void KX_GameObject::SetActivityCulling(ActivityCullingInfo::Flag flag, bool enab
 {
 	if (enable) {
 		m_activityCullingInfo.m_flags = (ActivityCullingInfo::Flag)(m_activityCullingInfo.m_flags | flag);
+		KX_Scene *scene = GetScene();
+		scene->AddCullingObject(this);
 	}
 	else {
 		m_activityCullingInfo.m_flags = (ActivityCullingInfo::Flag)(m_activityCullingInfo.m_flags & ~flag);
@@ -1476,9 +1763,22 @@ void KX_GameObject::SetActivityCulling(ActivityCullingInfo::Flag flag, bool enab
 		// Restore physics or logic when disabling activity culling.
 		if (flag & ActivityCullingInfo::ACTIVITY_PHYSICS) {
 			RestorePhysics();
+			ResumeLogic();
+			//if (m_actionManager) {
+			//	m_actionManager->Resume();
+			//}
+			m_bRender = true;
+			KX_Scene *scene = GetScene();
+			scene->RemoveCullingObject(this);
 		}
 		if (flag & ActivityCullingInfo::ACTIVITY_LOGIC) {
 			ResumeLogic();
+			if (m_actionManager) {
+				m_actionManager->Resume();
+			}
+			m_bRender = true;
+			KX_Scene *scene = GetScene();
+			scene->RemoveCullingObject(this);
 		}
 	}
 }
@@ -1540,7 +1840,7 @@ void KX_GameObject::RegisterCollisionCallbacks()
 }
 void KX_GameObject::RunCollisionCallbacks(KX_GameObject *collider, KX_CollisionContactPointList& contactPointList)
 {
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	if (!m_collisionCallbacks || PyList_GET_SIZE(m_collisionCallbacks) == 0) {
 		return;
 	}
@@ -1560,7 +1860,7 @@ void KX_GameObject::RunCollisionCallbacks(KX_GameObject *collider, KX_CollisionC
 
 	// Invalidate the collison contact point to avoid access to it in next frame
 	contactPointList.InvalidateProxy();
-#endif
+//#endif
 }
 
 template <bool recursive>
@@ -1612,21 +1912,21 @@ void KX_GameObject::SetComponents(EXP_ListValue<KX_PythonComponent> *components)
 
 void KX_GameObject::UpdateComponents()
 {
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	if (m_components) {
-		if ((m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_LOGIC_COMPONENTS) && (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_LOGIC)) {
-			for (KX_PythonComponent* comp : m_components) {
-				comp->Update();
-			}
+		//if ((m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_LOGIC_COMPONENTS) && (m_activityCullingInfo.m_flags & ActivityCullingInfo::ACTIVITY_LOGIC)) {
+		//	for (KX_PythonComponent* comp : m_components) {
+		//		comp->Update();
+		//	}
+		//}
+		//if (!m_suspended) {
+		for (KX_PythonComponent* comp : m_components) {
+			comp->Update();
 		}
-		else if (!m_suspended) {
-			for (KX_PythonComponent* comp : m_components) {
-				comp->Update();
-			}
-		}
+		//}
 	}
 
-#endif // WITH_PYTHON
+//#endif // WITH_PYTHON
 }
 
 KX_Scene *KX_GameObject::GetScene()
@@ -1634,6 +1934,7 @@ KX_Scene *KX_GameObject::GetScene()
 	BLI_assert(m_sgNode);
 	return static_cast<KX_Scene *>(m_sgNode->GetClientInfo());
 }
+
 
 /* ---------------------------------------------------------------------
  * Some stuff taken from the header
@@ -1657,7 +1958,7 @@ void KX_GameObject::Relink(std::map<SCA_IObject *, SCA_IObject *>& map_parameter
 	}
 }
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 
 #define PYTHON_CHECK_PHYSICS_CONTROLLER(obj, attr, ret) \
 	if (!(obj)->GetPhysicsController()) { \
@@ -1665,9 +1966,9 @@ void KX_GameObject::Relink(std::map<SCA_IObject *, SCA_IObject *>& map_parameter
 		return (ret); \
 	}
 
-#endif
+//#endif
 
-#ifdef USE_MATHUTILS
+//#ifdef USE_MATHUTILS
 
 /* These require an SGNode */
 #define MATHUTILS_VEC_CB_POS_LOCAL 1
@@ -1947,9 +2248,9 @@ void KX_GameObject_Mathutils_Callback_Init(void)
 	mathutils_kxgameob_matrix_cb_index = Mathutils_RegisterCallback(&mathutils_kxgameob_matrix_cb);
 }
 
-#endif // USE_MATHUTILS
+//#endif // USE_MATHUTILS
 
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 /* ------- python stuff ---------------------------------------------------*/
 PyMethodDef KX_GameObject::Methods[] = {
 	{"applyForce", (PyCFunction)KX_GameObject::sPyApplyForce, METH_VARARGS},
@@ -1962,6 +2263,43 @@ PyMethodDef KX_GameObject::Methods[] = {
 	{"setAngularVelocity", (PyCFunction)KX_GameObject::sPySetAngularVelocity, METH_VARARGS},
 	{"getVelocity", (PyCFunction)KX_GameObject::sPyGetVelocity, METH_VARARGS},
 	{"setDamping", (PyCFunction)KX_GameObject::sPySetDamping, METH_VARARGS},
+	{"setSoftMargin", (PyCFunction)KX_GameObject::sPySetSoftMargin, METH_VARARGS },
+
+	{"setCcdMotionThreshold", (PyCFunction)KX_GameObject::sPySetCcdMotionThreshold, METH_VARARGS},
+	{"setCcdSweptSphereRadius", (PyCFunction)KX_GameObject::sPySetCcdSweptSphereRadius, METH_VARARGS},
+	
+	{"setSoftLinearStiffness", (PyCFunction)KX_GameObject::sPySetSoftLinStiff, METH_VARARGS},
+	{"setSoftAngularStiffness", (PyCFunction)KX_GameObject::sPySetSoftAngStiff, METH_VARARGS},
+	{"setSoftVolume", (PyCFunction)KX_GameObject::sPySetSoftVolume, METH_VARARGS},
+	{"setSoftVsRigidHardness", (PyCFunction)KX_GameObject::sPySetSoftVsRigidHardness, METH_VARARGS},
+	{"setSoftVsKineticHardness", (PyCFunction)KX_GameObject::sPySetSoftVsKineticHardness, METH_VARARGS},
+	{"setSoftVsSoftHardness", (PyCFunction)KX_GameObject::sPySetSoftVsSoftHardness, METH_VARARGS },
+	{"setSoftVsRigidImpulseSplitCluster", (PyCFunction)KX_GameObject::sPySetSoftVsRigidImpulseSplitCluster, METH_VARARGS },
+	{"setSoftVsKineticImpulseSplitCluster", (PyCFunction)KX_GameObject::sPySetSoftVsKineticImpulseSplitCluster, METH_VARARGS },
+	{"setSoftVsSoftImpulseSplitCluster", (PyCFunction)KX_GameObject::sPySetSoftVsSoftImpulseSplitCluster, METH_VARARGS },
+	{"setSoftVelocitiesCorrectionFactor", (PyCFunction)KX_GameObject::sPySetVelocitiesCorrectionFactor, METH_VARARGS },
+	{"setSoftDampingCoefficient", (PyCFunction)KX_GameObject::sPySetDampingCoefficient, METH_VARARGS },
+	{"setSoftDragCoefficient", (PyCFunction)KX_GameObject::sPySetDragCoefficient, METH_VARARGS },
+	{"setSoftLiftCoefficient", (PyCFunction)KX_GameObject::sPySetLiftCoefficient, METH_VARARGS },
+	{"setSoftPressureCoefficient", (PyCFunction)KX_GameObject::sPySetPressureCoefficient, METH_VARARGS },
+	{"setSoftVolumeConversationCoefficient", (PyCFunction)KX_GameObject::sPySetVolumeConversationCoefficient, METH_VARARGS },
+	{"setSoftDynamicFrictionCoefficient", (PyCFunction)KX_GameObject::sPySetDynamicFrictionCoefficient, METH_VARARGS },
+	{"setSoftPoseMatchingCoefficient", (PyCFunction)KX_GameObject::sPySetPoseMatchingCoefficient, METH_VARARGS },
+	{"setSoftRigidContactsHardness", (PyCFunction)KX_GameObject::sPySetRigidContactsHardness, METH_VARARGS },
+	{"setSoftKineticContactsHardness", (PyCFunction)KX_GameObject::sPySetKineticContactsHardness, METH_VARARGS },
+	{"setSoftContactsHardness", (PyCFunction)KX_GameObject::sPySetSoftContactsHardness, METH_VARARGS },
+	{"setSoftAnchorsHardness", (PyCFunction)KX_GameObject::sPySetAnchorsHardness, METH_VARARGS },
+
+	{"setSoftVelocitySolverIterations", (PyCFunction)KX_GameObject::sPySetVelocitySolverIterations, METH_VARARGS },
+    {"setSoftPositionSolverIterations", (PyCFunction)KX_GameObject::sPySetPositionSolverIterations, METH_VARARGS },
+    {"setSoftDriftSolverIterations", (PyCFunction)KX_GameObject::sPySetDriftSolverIterations, METH_VARARGS },
+    {"setSoftClusterSolverIterations", (PyCFunction)KX_GameObject::sPySetClusterSolverIterations, METH_VARARGS },
+    {"setSoftPoseMatching", (PyCFunction)KX_GameObject::sPySetSoftPoseMatching, METH_VARARGS },
+
+
+
+
+
 	{"getReactionForce", (PyCFunction)KX_GameObject::sPyGetReactionForce, METH_NOARGS},
 	{"alignAxisToVect", (PyCFunction)KX_GameObject::sPyAlignAxisToVect, METH_VARARGS | METH_KEYWORDS},
 	{"getAxisVect", (PyCFunction)KX_GameObject::sPyGetAxisVect, METH_O},
@@ -1976,6 +2314,7 @@ PyMethodDef KX_GameObject::Methods[] = {
 	{"collide", (PyCFunction)KX_GameObject::sPyCollide, METH_O},
 	{"setParent", (PyCFunction)KX_GameObject::sPySetParent, METH_VARARGS | METH_KEYWORDS},
 	{"setVisible", (PyCFunction)KX_GameObject::sPySetVisible, METH_VARARGS},
+	{"setHalfAnimations", (PyCFunction)KX_GameObject::sPySetHalfAnimations, METH_VARARGS},
 	{"setOcclusion", (PyCFunction)KX_GameObject::sPySetOcclusion, METH_VARARGS},
 	{"removeParent", (PyCFunction)KX_GameObject::sPyRemoveParent, METH_NOARGS},
 
@@ -1987,10 +2326,14 @@ PyMethodDef KX_GameObject::Methods[] = {
 	{"reinstancePhysicsMesh", (PyCFunction)KX_GameObject::sPyReinstancePhysicsMesh, METH_VARARGS | METH_KEYWORDS},
 	{"replacePhysicsShape", (PyCFunction)KX_GameObject::sPyReplacePhysicsShape, METH_O},
 
+
+
 	EXP_PYMETHODTABLE_KEYWORDS(KX_GameObject, rayCastTo),
 	EXP_PYMETHODTABLE_KEYWORDS(KX_GameObject, rayCast),
 	EXP_PYMETHODTABLE_O(KX_GameObject, getDistanceTo),
 	EXP_PYMETHODTABLE_O(KX_GameObject, getVectTo),
+	EXP_PYMETHODTABLE_O(KX_GameObject, getTurnTo),
+
 	EXP_PYMETHODTABLE_KEYWORDS(KX_GameObject, sendMessage),
 	EXP_PYMETHODTABLE(KX_GameObject, addDebugProperty),
 
@@ -2029,13 +2372,15 @@ PyAttributeDef KX_GameObject::Attributes[] = {
 	EXP_PYATTRIBUTE_RW_FUNCTION("visible",  KX_GameObject, pyattr_get_visible,  pyattr_set_visible),
 	EXP_PYATTRIBUTE_RO_FUNCTION("culled", KX_GameObject, pyattr_get_culled),
 	EXP_PYATTRIBUTE_RO_FUNCTION("cullingBox",   KX_GameObject, pyattr_get_cullingBox),
-	EXP_PYATTRIBUTE_BOOL_RW("occlusion", KX_GameObject, m_bOccluder),
+	//EXP_PYATTRIBUTE_BOOL_RW("occlusion", KX_GameObject, m_bOccluder),
+	EXP_PYATTRIBUTE_RO_FUNCTION("culledPhysics", KX_GameObject, pyattr_get_culled_physics),
+	//EXP_PYATTRIBUTE_BOOL_RW("culledLogic", KX_GameObject, m_suspended),
 	EXP_PYATTRIBUTE_RW_FUNCTION("physicsCullingRadius", KX_GameObject, pyattr_get_physicsCullingRadius, pyattr_set_physicsCullingRadius),
 	EXP_PYATTRIBUTE_RW_FUNCTION("logicCullingRadius", KX_GameObject, pyattr_get_logicCullingRadius, pyattr_set_logicCullingRadius),
 	EXP_PYATTRIBUTE_RW_FUNCTION("physicsCulling", KX_GameObject, pyattr_get_physicsCulling, pyattr_set_physicsCulling),
-	EXP_PYATTRIBUTE_RW_FUNCTION("physicsCullingVelocity", KX_GameObject, pyattr_get_physicsSleepVelocityCulling, pyattr_set_physicsSleepVelocityCulling),
+	//EXP_PYATTRIBUTE_RW_FUNCTION("physicsCullingVelocity", KX_GameObject, pyattr_get_physicsSleepVelocityCulling, pyattr_set_physicsSleepVelocityCulling),
 	EXP_PYATTRIBUTE_RW_FUNCTION("logicCulling", KX_GameObject, pyattr_get_logicCulling, pyattr_set_logicCulling),
-	EXP_PYATTRIBUTE_RW_FUNCTION("logicCullingComponents", KX_GameObject, pyattr_get_logicComponentsCulling, pyattr_set_logicComponentsCulling),
+	//EXP_PYATTRIBUTE_RW_FUNCTION("logicCullingComponents", KX_GameObject, pyattr_get_logicComponentsCulling, pyattr_set_logicComponentsCulling),
 	EXP_PYATTRIBUTE_RW_FUNCTION("position", KX_GameObject, pyattr_get_worldPosition,    pyattr_set_localPosition),
 	EXP_PYATTRIBUTE_RO_FUNCTION("localInertia", KX_GameObject, pyattr_get_localInertia),
 	EXP_PYATTRIBUTE_RW_FUNCTION("orientation", KX_GameObject, pyattr_get_worldOrientation, pyattr_set_localOrientation),
@@ -2071,6 +2416,7 @@ PyAttributeDef KX_GameObject::Attributes[] = {
 	EXP_PYATTRIBUTE_RO_FUNCTION("components", KX_GameObject, pyattr_get_components),
 	EXP_PYATTRIBUTE_RW_FUNCTION("debugRecursive",   KX_GameObject, pyattr_get_debugRecursive, pyattr_set_debugRecursive),
 	EXP_PYATTRIBUTE_RW_FUNCTION("gravity", KX_GameObject, pyattr_get_gravity, pyattr_set_gravity),
+	//EXP_PYATTRIBUTE_RW_FUNCTION("physicsLow", KX_GameObject, pyattr_get_physicsLow, pyattr_set_physicsLow),
 
 	/* experimental, don't rely on these yet */
 	EXP_PYATTRIBUTE_RO_FUNCTION("sensors",      KX_GameObject, pyattr_get_sensors),
@@ -2759,10 +3105,29 @@ int KX_GameObject::pyattr_set_visible(EXP_PyObjectPlus *self_v, const EXP_PYATTR
 	return PY_SET_ATTR_SUCCESS;
 }
 
+int KX_GameObject::pyattr_set_halfanimations(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value)
+{
+	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
+	int param = PyObject_IsTrue(value);
+	if (param == -1) {
+		PyErr_SetString(PyExc_AttributeError, "gameOb.setHalfAnimations = bool: KX_GameObject, expected True or False");
+		return PY_SET_ATTR_FAIL;
+	}
+
+	self->SetHalfAnimations(param);
+	return PY_SET_ATTR_SUCCESS;
+}
+
 PyObject *KX_GameObject::pyattr_get_culled(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
 	return PyBool_FromLong(self->GetCullingNode().GetCulled());
+}
+
+PyObject *KX_GameObject::pyattr_get_culled_physics(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
+{
+	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
+	return PyBool_FromLong(self->GetPhysics());
 }
 
 PyObject *KX_GameObject::pyattr_get_cullingBox(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
@@ -2789,7 +3154,7 @@ int KX_GameObject::pyattr_set_physicsCulling(EXP_PyObjectPlus *self_v, const EXP
 	self->SetActivityCulling(ActivityCullingInfo::ACTIVITY_PHYSICS, param);
 	return PY_SET_ATTR_SUCCESS;
 }
-
+/*
 PyObject* KX_GameObject::pyattr_get_physicsSleepVelocityCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef)
 {
 	KX_GameObject* self = static_cast<KX_GameObject*>(self_v);
@@ -2808,7 +3173,7 @@ int KX_GameObject::pyattr_set_physicsSleepVelocityCulling(EXP_PyObjectPlus* self
 	self->SetActivityCulling(ActivityCullingInfo::ACTIVITY_PHYSICS_SLEEPVELOCITY, param);
 	return PY_SET_ATTR_SUCCESS;
 }
-
+*/
 PyObject *KX_GameObject::pyattr_get_logicCulling(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
@@ -2827,7 +3192,7 @@ int KX_GameObject::pyattr_set_logicCulling(EXP_PyObjectPlus *self_v, const EXP_P
 	self->SetActivityCulling(ActivityCullingInfo::ACTIVITY_LOGIC, param);
 	return PY_SET_ATTR_SUCCESS;
 }
-
+/*
 PyObject* KX_GameObject::pyattr_get_logicComponentsCulling(EXP_PyObjectPlus* self_v, const EXP_PYATTRIBUTE_DEF* attrdef)
 {
 	KX_GameObject* self = static_cast<KX_GameObject*>(self_v);
@@ -2846,7 +3211,7 @@ int KX_GameObject::pyattr_set_logicComponentsCulling(EXP_PyObjectPlus* self_v, c
 	self->SetActivityCulling(ActivityCullingInfo::ACTIVITY_LOGIC_COMPONENTS, param);
 	return PY_SET_ATTR_SUCCESS;
 }
-
+*/
 PyObject *KX_GameObject::pyattr_get_physicsCullingRadius(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
@@ -2886,7 +3251,26 @@ int KX_GameObject::pyattr_set_logicCullingRadius(EXP_PyObjectPlus *self_v, const
 
 	return PY_SET_ATTR_SUCCESS;
 }
+/*
+PyObject *KX_GameObject::pyattr_get_physicsLow(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
+{
+	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
+	return PyBool_FromLong(self->GetActivityCullingInfo().m_flags & ActivityCullingInfo::ACTIVITY_PHYSICS_LOW);
+} 
 
+int KX_GameObject::pyattr_set_physicsLow(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef, PyObject *value)
+{
+	KX_GameObject *self = static_cast<KX_GameObject *>(self_v);
+	int param = PyObject_IsTrue(value);
+	if (param == -1) {
+		PyErr_SetString(PyExc_AttributeError, "gameOb.physicsLow = bool: KX_GameObject, expected True or False");
+		return PY_SET_ATTR_FAIL;
+	}
+
+	self->SetActivityCulling(ActivityCullingInfo::ACTIVITY_PHYSICS_LOW, param);
+	return PY_SET_ATTR_SUCCESS;
+}
+*/
 PyObject *KX_GameObject::pyattr_get_worldPosition(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 #ifdef USE_MATHUTILS
@@ -3680,6 +4064,408 @@ PyObject *KX_GameObject::PySetDamping(PyObject *args)
 	Py_RETURN_NONE;
 }
 
+
+PyObject *KX_GameObject::PySetSoftMargin(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftMargin", &val)) {
+        return nullptr;
+    }
+    SetSoftMargin(val);
+    Py_RETURN_NONE;
+}
+
+
+PyObject *KX_GameObject::PySetCcdMotionThreshold(PyObject *args)
+{
+  float motion_threshold;
+
+  if (!PyArg_ParseTuple(args, "f:setCcdMotionThreshold", &motion_threshold)) {
+    return nullptr;
+  }
+
+  if ((motion_threshold < 0.0f) || (motion_threshold > 200.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setCcdMotionThreshold: KX_GameObject, "
+                    "expected a float in range 0.0 - 200.0");
+    return nullptr;
+  }
+
+  setCcdMotionThreshold(motion_threshold);
+  Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetCcdSweptSphereRadius(PyObject *args)
+{
+  float swept_sphere_radius;
+
+  if (!PyArg_ParseTuple(args, "f:setCcdSweptSphereRadius", &swept_sphere_radius)) {
+    return nullptr;
+  }
+
+  if ((swept_sphere_radius < 0.0f) || (swept_sphere_radius > 200.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setCcdSweptSphereRadius: KX_GameObject, "
+                    "expected a float in range 0.0 - 200.0");
+    return nullptr;
+  }
+
+  setCcdSweptSphereRadius(swept_sphere_radius);
+  Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftLinStiff(PyObject *args)
+{
+  float linstiff;
+
+  if (!PyArg_ParseTuple(args, "f:setSoftLinearStiffness", &linstiff)) {
+    return nullptr;
+  }
+
+  if ((linstiff < 0.0f) || (linstiff > 1.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setSoftLinearStiffness: KX_GameObject, "
+                    "expected a float in range 0.0 - 1.0");
+    return nullptr;
+  }
+
+  SetSoftLinStiff(linstiff);
+  Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftAngStiff(PyObject *args)
+{
+  float angstiff;
+
+  if (!PyArg_ParseTuple(args, "f:setSoftAngularStiffness", &angstiff)) {
+    return nullptr;
+  }
+
+  if ((angstiff < 0.0f) || (angstiff > 1.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setSoftAngularStiffness: KX_GameObject, "
+                    "expected a float in range 0.0 - 1.0");
+    return nullptr;
+  }
+
+  SetSoftAngStiff(angstiff);
+  Py_RETURN_NONE;
+}
+
+
+PyObject *KX_GameObject::PySetSoftVolume(PyObject *args)
+{
+  float volume;
+
+  if (!PyArg_ParseTuple(args, "f:setSoftVolume", &volume)) {
+    return nullptr;
+  }
+
+  if ((volume < 0.0f) || (volume > 1.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setSoftVolume: KX_GameObject, "
+                    "expected a float in range 0.0 - 1.0");
+    return nullptr;
+  }
+
+  SetSoftVolume(volume);
+  Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftVsRigidHardness(PyObject *args)
+{
+  float hardness;
+
+  if (!PyArg_ParseTuple(args, "f:setSoftVsRigidHardness", &hardness)) {
+    return nullptr;
+  }
+
+  if ((hardness < 0.0f) || (hardness > 1.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setSoftVsRigidHardness: KX_GameObject, "
+                    "expected a float in range 0.0 - 1.0");
+    return nullptr;
+  }
+
+  SetSoftVsRigidHardness(hardness);
+  Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftVsKineticHardness(PyObject *args)
+{
+  float hardness;
+
+  if (!PyArg_ParseTuple(args, "f:setSoftVsKineticHardness", &hardness)) {
+    return nullptr;
+  }
+
+  if ((hardness < 0.0f) || (hardness > 1.0f)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "gameOb.setSoftVsKineticHardness: KX_GameObject, "
+                    "expected a float in range 0.0 - 1.0");
+    return nullptr;
+  }
+
+  SetSoftVsKineticHardness(hardness);
+  Py_RETURN_NONE;
+}
+
+
+
+
+
+
+PyObject *KX_GameObject::PySetSoftVsSoftHardness(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVsSoftHardness", &val)) {
+        return nullptr;
+    }
+    if ((val < 0.0f) || (val > 1.0f)) {
+        PyErr_SetString(PyExc_TypeError,
+                            "gameOb.setSoftVsSoftHardness: KX_GameObject, "
+                            "expected a float in range 0.0 - 1.0");
+        return nullptr;
+    }
+    SetSoftVsSoftHardness(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftVsRigidImpulseSplitCluster(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVsRigidImpulseSplitCluster", &val)) {
+        return nullptr;
+    }
+    if ((val < 0.0f) || (val > 1.0f)) {
+        PyErr_SetString(PyExc_TypeError,
+                            "gameOb.setSoftVsRigidImpulseSplitCluster: KX_GameObject, "
+                            "expected a float in range 0.0 - 1.0");
+        return nullptr;
+    }
+    SetSoftVsRigidImpulseSplitCluster(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftVsKineticImpulseSplitCluster(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVsKineticImpulseSplitCluster", &val)) {
+        return nullptr;
+    }
+    if ((val < 0.0f) || (val > 1.0f)) {
+        PyErr_SetString(PyExc_TypeError,
+                            "gameOb.setSoftVsKineticImpulseSplitCluster: KX_GameObject, "
+                            "expected a float in range 0.0 - 1.0");
+        return nullptr;
+    }
+    SetSoftVsKineticImpulseSplitCluster(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftVsSoftImpulseSplitCluster(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVsSoftImpulseSplitCluster", &val)) {
+        return nullptr;
+    }
+    if ((val < 0.0f) || (val > 1.0f)) {
+        PyErr_SetString(PyExc_TypeError,
+                            "gameOb.setSoftVsSoftImpulseSplitCluster: KX_GameObject, "
+                            "expected a float in range 0.0 - 1.0");
+        return nullptr;
+    }
+    SetSoftVsSoftImpulseSplitCluster(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetVelocitiesCorrectionFactor(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVelocitiesCorrectionFactor", &val)) {
+        return nullptr;
+    }
+    SetVelocitiesCorrectionFactor(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetDampingCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftDampingCoefficient", &val)) {
+        return nullptr;
+    }
+    SetDampingCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetDragCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftDragCoefficient", &val)) {
+        return nullptr;
+    }
+    SetDragCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetLiftCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftLiftCoefficient", &val)) {
+        return nullptr;
+    }
+    SetLiftCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetPressureCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftPressureCoefficient", &val)) {
+        return nullptr;
+    }
+    SetPressureCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetVolumeConversationCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftVolumeConversationCoefficient", &val)) {
+        return nullptr;
+    }
+    SetVolumeConversationCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetDynamicFrictionCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftDynamicFrictionCoefficient", &val)) {
+        return nullptr;
+    }
+    SetDynamicFrictionCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetPoseMatchingCoefficient(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftPoseMatchingCoefficient", &val)) {
+        return nullptr;
+    }
+    SetPoseMatchingCoefficient(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetRigidContactsHardness(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftRigidContactsHardness", &val)) {
+        return nullptr;
+    }
+    SetRigidContactsHardness(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetKineticContactsHardness(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftKineticContactsHardness", &val)) {
+        return nullptr;
+    }
+    SetKineticContactsHardness(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetSoftContactsHardness(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftContactsHardness", &val)) {
+        return nullptr;
+    }
+    SetSoftContactsHardness(val);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetAnchorsHardness(PyObject *args)
+{
+    float val;
+    if (!PyArg_ParseTuple(args, "f:setSoftAnchorsHardness", &val)) {
+        return nullptr;
+    }
+    SetAnchorsHardness(val);
+    Py_RETURN_NONE;
+}
+
+
+
+
+
+
+
+
+PyObject *KX_GameObject::PySetVelocitySolverIterations(PyObject *args)
+{
+    int iterations;
+    if (!PyArg_ParseTuple(args, "i:setSoftVelocitySolverIterations", &iterations)) {
+        return nullptr;
+    }
+    SetVelocitySolverIterations(iterations);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetPositionSolverIterations(PyObject *args)
+{
+    int iterations;
+    if (!PyArg_ParseTuple(args, "i:setSoftPositionSolverIterations", &iterations)) {
+        return nullptr;
+    }
+    SetPositionSolverIterations(iterations);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetDriftSolverIterations(PyObject *args)
+{
+    int iterations;
+    if (!PyArg_ParseTuple(args, "i:setSoftDriftSolverIterations", &iterations)) {
+        return nullptr;
+    }
+    SetDriftSolverIterations(iterations);
+    Py_RETURN_NONE;
+}
+
+PyObject *KX_GameObject::PySetClusterSolverIterations(PyObject *args)
+{
+    int iterations;
+    if (!PyArg_ParseTuple(args, "i:setSoftClusterSolverIterations", &iterations)) {
+        return nullptr;
+    }
+    SetClusterSolverIterations(iterations);
+    Py_RETURN_NONE;
+}
+
+
+
+
+
+PyObject *KX_GameObject::PySetSoftPoseMatching(PyObject *args)
+{
+    bool enableShapeMatching;
+    if (!PyArg_ParseTuple(args, "p:setSoftPoseMatching", &enableShapeMatching)) {
+        return nullptr;
+    }
+    SetSoftPoseMatching(enableShapeMatching);
+    Py_RETURN_NONE;
+}
+
+
+
+
+
+
+
 PyObject *KX_GameObject::PySetVisible(PyObject *args)
 {
 	int visible, recursive = 0;
@@ -3688,6 +4474,18 @@ PyObject *KX_GameObject::PySetVisible(PyObject *args)
 	}
 
 	SetVisible(visible ? true : false, recursive ? true : false);
+	Py_RETURN_NONE;
+
+}
+
+PyObject *KX_GameObject::PySetHalfAnimations(PyObject *args)
+{
+	int halfanimations = 0;
+	if (!PyArg_ParseTuple(args, "i|i:setHalfAnimations", &halfanimations)) {
+		return nullptr;
+	}
+
+	SetHalfAnimations(halfanimations ? true : false);
 	Py_RETURN_NONE;
 
 }
@@ -4029,6 +4827,45 @@ EXP_PYMETHODDEF_DOC_O(KX_GameObject, getVectTo,
 		PyTuple_SET_ITEM(returnValue, 2, PyObjectFrom(locToDir));
 	}
 	return returnValue;
+}
+
+EXP_PYMETHODDEF_DOC_O(KX_GameObject, getTurnTo,
+                      "getTurnTo(other): get local Vector to another point/KX_GameObject\n"
+                      "Returns (localVector)\n")
+{
+	mt::vec3 toPoint, fromPoint;
+	mt::vec3 toDir, locToDir;
+	float distance;
+
+	SCA_LogicManager *logicmgr = GetScene()->GetLogicManager();
+
+	if (!PyVecTo(value, toPoint)) {
+		PyErr_Clear();
+
+		KX_GameObject *other;
+		if (ConvertPythonToGameObject(logicmgr, value, &other, false, "")) { /* error will be overwritten */
+			toPoint = other->NodeGetWorldPosition();
+		}
+		else {
+			PyErr_SetString(PyExc_TypeError, "gameOb.getTurnTo(other): KX_GameObject, expected a 3D Vector or KX_GameObject type");
+			return nullptr;
+		}
+	}
+
+	fromPoint = NodeGetWorldPosition();
+	toDir = toPoint - fromPoint;
+	distance = toDir.Length();
+
+	if (mt::FuzzyZero(distance)) {
+		locToDir = toDir = mt::zero3;
+		//distance = 0.0f;
+	}
+	else {
+		toDir.Normalize();
+		locToDir = toDir * NodeGetWorldOrientation();
+	}
+
+	return PyObjectFrom(locToDir);
 }
 
 KX_GameObject::RayCastData::RayCastData(const std::string& prop, bool xray, unsigned int mask)
@@ -4607,4 +5444,4 @@ bool ConvertPythonToGameObject(SCA_LogicManager *manager, PyObject *value, KX_Ga
 
 	return false;
 }
-#endif // WITH_PYTHON
+//#endif // WITH_PYTHON

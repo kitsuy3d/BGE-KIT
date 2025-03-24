@@ -93,7 +93,7 @@ plDynamicsWorldHandle plCreateDynamicsWorld(plPhysicsSdkHandle physicsSdkHandle)
 	btDefaultCollisionConfiguration* collisionConfiguration = new (mem)btDefaultCollisionConfiguration();
 	mem = btAlignedAlloc(sizeof(btCollisionDispatcher),16);
 	btDispatcher*				dispatcher = new (mem)btCollisionDispatcher(collisionConfiguration);
-	mem = btAlignedAlloc(sizeof(btAxisSweep3),16);
+	mem = btAlignedAlloc(sizeof(btAxisSweep3),32);
 	btBroadphaseInterface*		pairCache = new (mem)btAxisSweep3(physicsSdk->m_worldAabbMin,physicsSdk->m_worldAabbMax);
 	mem = btAlignedAlloc(sizeof(btSequentialImpulseConstraintSolver),16);
 	btConstraintSolver*			constraintSolver = new(mem) btSequentialImpulseConstraintSolver();
@@ -345,12 +345,12 @@ double plNearestPoints(float p1[3], float p2[3], float p3[3], float q1[3], float
 	btTriangleShapeEx trishapeA(vp,
 				  btVector3(p2[0], p2[1], p2[2]), 
 				  btVector3(p3[0], p3[1], p3[2]));
-	trishapeA.setMargin(0.000001f);
+	trishapeA.setMargin(0.0000000001f);
 	btVector3 vq(q1[0], q1[1], q1[2]);
 	btTriangleShapeEx trishapeB(vq,
 				  btVector3(q2[0], q2[1], q2[2]), 
 				  btVector3(q3[0], q3[1], q3[2]));
-	trishapeB.setMargin(0.000001f);
+	trishapeB.setMargin(0.0000000001f);
 	
 	// btVoronoiSimplexSolver sGjkSimplexSolver;
 	// btGjkEpaPenetrationDepthSolver penSolverPtr;	

@@ -96,6 +96,11 @@ void KX_BlenderCanvas::ResizeWindow(int width, int height)
 void KX_BlenderCanvas::Resize(int width, int height)
 {
 	// Not implemented for the embedded player
+	// initialize area so that it's available for game logic on frame 1 (ImageViewport)
+	m_area.SetLeft(0);
+	m_area.SetBottom(0);
+	m_area.SetRight(width - 1);
+	m_area.SetTop(height - 1);
 }
 
 void KX_BlenderCanvas::SetFullScreen(bool enable)

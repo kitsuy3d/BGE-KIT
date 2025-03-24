@@ -1,0 +1,15 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform float bgl_RenderedTextureWidth;
+uniform float bgl_RenderedTextureHeight;
+uniform float Pixeliz;
+// Pixel Render
+void main()
+{
+    float pixW = Pixeliz * (1.0 / bgl_RenderedTextureWidth);
+    float pixH = Pixeliz * (1.0 / bgl_RenderedTextureHeight);
+
+    vec2 pos = vec2(pixW * floor(gl_TexCoord[0].x / pixW), 
+                    pixH * floor(gl_TexCoord[0].y / pixH));
+                    
+    gl_FragColor = texture2D(bgl_RenderedTexture, pos);
+}

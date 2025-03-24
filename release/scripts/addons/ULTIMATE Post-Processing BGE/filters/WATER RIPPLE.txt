@@ -1,0 +1,28 @@
+// Water Ripple Fragment Shader for Blender Game Engine (BGE) with hard-coded center
+uniform sampler2D bgl_RenderedTexture; // Rendered texture input for BGE
+uniform float timer;                   // Time to animate the ripples
+uniform float freq = 10.0;             // Frequency of the ripples
+uniform float amount;                  // Intensity or size of the ripple effect
+uniform float speed = 2.0;             // Speed at which the ripples propagate
+
+void main()
+{
+    // Set the center of the ripple effect (e.g., middle of the screen)
+    vec2 center = vec2(0.5, 0.5);  // Center of texture coordinates (adjust if needed)
+
+    // Get the texture coordinates
+    vec2 uv = gl_TexCoord[0].st;
+    
+    // Calculate the offset from the center
+    vec2 coord = uv - center;
+    float len = length(coord);
+
+    // Apply ripple distortion based on frequency, speed, and amount
+    uv += coord * amount * abs(cos(len * freq - timer * speed)) / len;
+
+    // Sample the texture at the distorted coordinates
+    vec4 color = texture2D(bgl_RenderedTexture, uv);
+
+    // Set the output color
+    gl_FragColor = color;
+}

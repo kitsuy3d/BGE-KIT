@@ -12,6 +12,8 @@ public:
 	EXP_ListValue<KX_GameObject> *m_objects;
 	KX_CullingHandler& m_handler;
 	int m_layer;
+	unsigned int m_i;
+	unsigned int m_end;
 
 	CullTask(EXP_ListValue<KX_GameObject> *objects, KX_CullingHandler& handler, int layer)
 		:m_objects(objects),
@@ -29,8 +31,8 @@ public:
 
 	void operator()(const tbb::blocked_range<size_t>& r)
 	{
-		for (unsigned int i = r.begin(), end = r.end(); i < end; ++i) {
-			KX_GameObject *obj = m_objects->GetValue(i);
+		for (m_i = r.begin(), m_end = r.end(); m_i < m_end; ++m_i) {
+			KX_GameObject *obj = m_objects->GetValue(m_i);
 			if (obj->Renderable(m_layer)) {
 				// Update the object bounding volume box.
 				obj->UpdateBounds(false);

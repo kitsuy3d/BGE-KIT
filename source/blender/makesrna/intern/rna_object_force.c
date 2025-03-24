@@ -1524,7 +1524,7 @@ static void rna_def_game_softbody(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "linear_stiffness", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "linStiff");
 	RNA_def_property_range(prop, 0.0f, 1.0f);
-	RNA_def_property_ui_text(prop, "Linear Stiffness", "Linear stiffness of the soft body links");
+	RNA_def_property_ui_text(prop, "Linear Stiffness", "Linear stiffness of the soft body links, Python: own.setSoftLinearStiffness(0.0)");
 
 	prop = RNA_def_property(srna, "dynamic_friction", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "kDF");
@@ -1534,13 +1534,13 @@ static void rna_def_game_softbody(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "shape_threshold", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "kMT");
 	RNA_def_property_range(prop, 0.0f, 1.0f);
-	RNA_def_property_ui_text(prop, "Threshold", "Shape matching threshold");
+	RNA_def_property_ui_text(prop, "Threshold", "Shape matching threshold, Python: own.setPoseMatchingCoefficient(0.03)");
 
 	prop = RNA_def_property(srna, "collision_margin", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "margin");
-	RNA_def_property_range(prop, 0.01f, 1.0f);
+	RNA_def_property_range(prop, -10.0f, 10.0f);
 	RNA_def_property_ui_text(prop, "Margin",
-	                         "Collision margin for soft body. Small value makes the algorithm unstable");
+	                         "Collision margin for soft body. more then 0.0 makes the algorithm unstable, Python: own.setSoftMargin(0.0)");
 
 	prop = RNA_def_property(srna, "weld_threshold", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "welding");
@@ -1665,7 +1665,7 @@ static void rna_def_game_softbody(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "use_shape_match", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", OB_BSB_SHAPE_MATCHING);
-	RNA_def_property_ui_text(prop, "Shape Match", "Enable soft body shape matching goal");
+	RNA_def_property_ui_text(prop, "Shape Match", "Enable soft body shape matching goal, Python: own.setSoftPoseMatching(0)");
 
 	prop = RNA_def_property(srna, "use_bending_constraints", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flag", OB_BSB_BENDING_CONSTRAINTS);

@@ -1,0 +1,18 @@
+// Reverse Color Shader for Blender Game Engine (BGE)
+uniform sampler2D bgl_RenderedTexture; // Rendered texture input
+uniform float reverseAmount;           // Amount to reverse colors (0 = normal, 1 = fully reversed)
+
+void main()
+{
+    // Get the original color from the texture
+    vec4 color = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+
+    // Calculate the reversed color
+    vec4 reversedColor = vec4(1.0 - color.rgb, color.a); // Invert RGB values, keep alpha unchanged
+
+    // Blend original and reversed color based on reverseAmount
+    vec4 finalColor = mix(color, reversedColor, reverseAmount);
+
+    // Output the final color
+    gl_FragColor = finalColor;
+}

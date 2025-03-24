@@ -747,7 +747,7 @@ static void rna_def_object_actuator(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "damping", PROP_INT, PROP_NONE);
 	RNA_def_property_ui_range(prop, 0, 1000, 1, 1);
-	RNA_def_property_ui_text(prop, "Damping Frames", "Number of frames to reach the target velocity");
+	RNA_def_property_ui_text(prop, "Damping Frames", "Number of frames to reach the target velocity, Python: own.actuators[0].damping = 0");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "proportional_coefficient", PROP_FLOAT, PROP_NONE);
@@ -812,28 +812,28 @@ static void rna_def_object_actuator(BlenderRNA *brna)
 	RNA_def_property_float_sdna(prop, NULL, "dloc");
 	RNA_def_property_array(prop, 3);
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
-	RNA_def_property_ui_text(prop, "Loc", "Location");
+	RNA_def_property_ui_text(prop, "Loc", "Location, Python: own.actuators[0].dLoc = (0.0, 0.1, 0.0), own.actuators[0].useLocalDLoc = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "offset_rotation", PROP_FLOAT, PROP_EULER);
 	RNA_def_property_float_sdna(prop, NULL, "drot");
 	RNA_def_property_array(prop, 3);
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
-	RNA_def_property_ui_text(prop, "Rot", "Rotation");
+	RNA_def_property_ui_text(prop, "Rot", "Rotation, Python: own.actuators[0].dRot = (0.0, 0.0, 0.2), own.actuators[0].useLocalDRot = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "force", PROP_FLOAT, PROP_XYZ);
 	RNA_def_property_float_sdna(prop, NULL, "forceloc");
 	RNA_def_property_array(prop, 3);
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
-	RNA_def_property_ui_text(prop, "Force", "Force");
+	RNA_def_property_ui_text(prop, "Force", "Force, Python: own.actuators[0].force = (0.0, 100.0, 0.0), own.actuators[0].useLocalForce = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "torque", PROP_FLOAT, PROP_XYZ);
 	RNA_def_property_float_sdna(prop, NULL, "forcerot");
 	RNA_def_property_array(prop, 3);
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
-	RNA_def_property_ui_text(prop, "Torque", "Torque");
+	RNA_def_property_ui_text(prop, "Torque", "Torque, Python: own.actuators[0].torque = (0.0, 0.0, 10.0), own.actuators[0].useLocalTorque = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "linear_velocity", PROP_FLOAT, PROP_XYZ);
@@ -842,14 +842,14 @@ static void rna_def_object_actuator(BlenderRNA *brna)
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
 	RNA_def_property_ui_text(prop, "Linear Velocity",
 	                         "Linear velocity (in Servo mode it sets the target relative linear velocity, it will be "
-	                         "achieved by automatic application of force - Null velocity is a valid target)");
+	                         "achieved by automatic application of force - Null velocity is a valid target), Python: own.actuators[0].linV = (0.0, 10.0, 0.0), own.actuators[0].useLocalLinV = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "angular_velocity", PROP_FLOAT, PROP_XYZ);
 	RNA_def_property_float_sdna(prop, NULL, "angularvelocity");
 	RNA_def_property_array(prop, 3);
 	RNA_def_property_ui_range(prop, -10000.0, 10000.0, 10, 2);
-	RNA_def_property_ui_text(prop, "Angular Velocity", "Angular velocity");
+	RNA_def_property_ui_text(prop, "Angular Velocity", "Angular velocity, Python: own.actuators[0].angV = (0.0, 0.0, 10.0), own.actuators[0].useLocalAngV = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	/* booleans */
@@ -920,10 +920,12 @@ static void rna_def_camera_actuator(BlenderRNA *brna)
 	PropertyRNA *prop;
 
 	static const EnumPropertyItem prop_axis_items[] = {
-		{OB_POSX, "POS_X", 0, "+X", "Camera tries to get behind the X axis"},
-		{OB_POSY, "POS_Y", 0, "+Y", "Camera tries to get behind the Y axis"},
-		{OB_NEGX, "NEG_X", 0, "-X", "Camera tries to get behind the -X axis"},
-		{OB_NEGY, "NEG_Y", 0, "-Y", "Camera tries to get behind the -Y axis"},
+		{OB_POSX, "POS_X", 0, "+X", "Camera tries to get behind the X axis 0"},
+		{OB_POSY, "POS_Y", 0, "+Y", "Camera tries to get behind the Y axis 1"},
+		{OB_POSZ, "POS_Z", 0, "+Z", "Camera tries to get behind the Z axis 2"},
+		{OB_NEGX, "NEG_X", 0, "-X", "Camera tries to get behind the -X axis 3"},
+		{OB_NEGY, "NEG_Y", 0, "-Y", "Camera tries to get behind the -Y axis 4"},
+		{OB_NEGZ, "NEG_Z", 0, "-Z", "Camera tries to get behind the -Z axis 5"},
 		{0, NULL, 0, NULL, NULL}
 	};
 
@@ -935,37 +937,37 @@ static void rna_def_camera_actuator(BlenderRNA *brna)
 	RNA_def_property_struct_type(prop, "Object");
 	RNA_def_property_pointer_sdna(prop, NULL, "ob");
 	RNA_def_property_flag(prop, PROP_EDITABLE);
-	RNA_def_property_ui_text(prop, "Camera Object", "Look at this Object");
+	RNA_def_property_ui_text(prop, "Camera Object", "Look at this Object, Python: cont.actuators[0].object = GameObject");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	/* floats */
 	prop = RNA_def_property(srna, "height", PROP_FLOAT, PROP_NONE);
-	RNA_def_property_ui_range(prop, 0.0, 20.0, 1, 2);
-	RNA_def_property_ui_text(prop, "Height", "");
+	RNA_def_property_ui_range(prop, 0.0, 100.0, 1, 2);
+	RNA_def_property_ui_text(prop, "Height", "height to stay above the target object, Python: cont.actuators[0].height = 10.0");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "min", PROP_FLOAT, PROP_NONE);
-	RNA_def_property_ui_range(prop, 0.0, 20.0, 1, 2);
-	RNA_def_property_ui_text(prop, "Min", "");
+	RNA_def_property_ui_range(prop, 0.0, 200.0, 1, 2);
+	RNA_def_property_ui_text(prop, "Min", "minimum distance to the target object maintained by the actuator,  Python: cont.actuators[0].min = 10.0");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "max", PROP_FLOAT, PROP_NONE);
-	RNA_def_property_ui_range(prop, 0.0, 20.0, 1, 2);
-	RNA_def_property_ui_text(prop, "Max", "");
+	RNA_def_property_ui_range(prop, 0.0, 200.0, 1, 2);
+	RNA_def_property_ui_text(prop, "Max", "maximum distance to stay from the target object, Python: cont.actuators[0].max = 10.0");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "damping", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "damping");
 	RNA_def_property_range(prop, 0, 10.0);
-	RNA_def_property_ui_range(prop, 0, 5.0, 1, 2);
-	RNA_def_property_ui_text(prop, "Damping", "Strength of the constraint that drives the camera behind the target");
+	RNA_def_property_ui_range(prop, 0, 10.0, 1, 2);
+	RNA_def_property_ui_text(prop, "Damping", "Strength of the constraint that drives the camera behind the target, Python: cont.actuators[0].damping = 0.03");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	/* +x/+y/-x/-y */
 	prop = RNA_def_property(srna, "axis", PROP_ENUM, PROP_NONE);
 	RNA_def_property_enum_sdna(prop, NULL, "axis");
 	RNA_def_property_enum_items(prop, prop_axis_items);
-	RNA_def_property_ui_text(prop, "Axis", "Axis the Camera will try to get behind");
+	RNA_def_property_ui_text(prop, "Axis", "Axis the Camera will try to get behind, The camera axis (0, 1, 2) for positive XYZ, (3, 4, 5) for negative XYZ,  Python: cont.actuators[0].axis = 1");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 }
 
@@ -997,19 +999,27 @@ static void rna_def_sound_actuator(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "mode", PROP_ENUM, PROP_NONE);
 	RNA_def_property_enum_sdna(prop, NULL, "type");
 	RNA_def_property_enum_items(prop, prop_type_items);
-	RNA_def_property_ui_text(prop, "Play Mode", "");
+	RNA_def_property_ui_text(prop, "Play Mode", "Play Stop: The sound effect is played when activated. Stops instantly when deactivated"
+		"Play End: The sound effect is played when activated. When deactivated, stops after finishing playing the sound The sound is not replayed if activated while still playing"
+		"Loop Stop: The sound is played as infinite loop when activated. Stops instantly when deactivated"
+		"Loop End: The sound is played as infinite loop when activated. When deactivated"
+		"stops after finishing playing the sound"
+		"Loop Bidirectional: The sound is played as infinite ping-pong loop. When deactivated"
+		"stops after finishing playing the sound"
+		"Loop Bidirectional Stop: The sound is played as infinite ping-pong loop. Stops instantly when deactivated, "
+		"Python: own.actuators[0].startSound(), own.actuators[0].time = 0.01");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "volume", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_ui_range(prop, 0.0, 1.0, 1, 2);
 	RNA_def_property_range(prop, 0.0, 2.0);
-	RNA_def_property_ui_text(prop, "Volume", "Initial volume of the sound");
+	RNA_def_property_ui_text(prop, "Volume", "Initial volume of the sound, Python: own.actuators[0].volume = 0.2");
 	RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_ID_SOUND);
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	prop = RNA_def_property(srna, "pitch", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_ui_range(prop, -12.0, 12.0, 1, 2);
-	RNA_def_property_ui_text(prop, "Pitch", "Pitch of the sound");
+	RNA_def_property_ui_text(prop, "Pitch", "Pitch of the sound, Python: own.actuators[0].pitch = 0.6");
 	RNA_def_property_translation_context(prop, BLT_I18NCONTEXT_ID_SOUND);
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
@@ -1904,7 +1914,7 @@ static void rna_def_parent_actuator(BlenderRNA *brna)
 	RNA_def_property_struct_type(prop, "Object");
 	RNA_def_property_pointer_sdna(prop, NULL, "ob");
 	RNA_def_property_flag(prop, PROP_EDITABLE);
-	RNA_def_property_ui_text(prop, "Parent Object", "Set this object as parent");
+	RNA_def_property_ui_text(prop, "Parent Object", "Set this object as parent, Python: own.parent, setParent(parent, compound=True, ghost=True), own.removeParent()");
 	RNA_def_property_update(prop, NC_LOGIC, NULL);
 
 	/* booleans */

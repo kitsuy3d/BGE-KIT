@@ -65,8 +65,8 @@ Global G;
 UserDef U;
 
 char versionstr[48] = "";
-char upbge_versionstr[48] = "";
 char range_versionstr[48] = "";
+char upbge_versionstr[48] = "";
 
 /* ********** free ********** */
 
@@ -111,24 +111,24 @@ void BKE_blender_version_string(char *version_str, size_t maxncpy, short version
 	}
 }
 
-void BKE_upbge_version_string(char *version_str, size_t maxncpy, short version, short subversion, bool v_prefix, bool include_subversion)
+void BKE_range_version_string(char *version_str, size_t maxncpy, short version, short subversion, bool v_prefix, bool include_subversion)
 {
 	const char *prefix = v_prefix ? "v" : "";
 
 	if (include_subversion) {
-		BLI_snprintf(version_str, maxncpy, "%s0.%d.%d", prefix, version, subversion);
+		BLI_snprintf(version_str, maxncpy, "%s0.%d.%d", prefix, version / 100, subversion);
 	}
 	else {
 		BLI_snprintf(version_str, maxncpy, "%s0.%d", prefix, version);
 	}
 }
 
-void BKE_range_version_string(char* version_str, size_t maxncpy, short version, short subversion, bool v_prefix, bool include_subversion)
+void BKE_upbge_version_string(char *version_str, size_t maxncpy, short version, short subversion, bool v_prefix, bool include_subversion)
 {
-	const char* prefix = v_prefix ? "v" : "";
+	const char *prefix = v_prefix ? "v" : "";
 
 	if (include_subversion) {
-		BLI_snprintf(version_str, maxncpy, "%s%d.%d", prefix, version, subversion);
+		BLI_snprintf(version_str, maxncpy, "%s0.%d.%d", prefix, version, subversion);
 	}
 	else {
 		BLI_snprintf(version_str, maxncpy, "%s0.%d", prefix, version);

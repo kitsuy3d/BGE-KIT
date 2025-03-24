@@ -360,6 +360,39 @@ static PyObject *gPyGetLogicTicRate(PyObject *)
 	return PyFloat_FromDouble(KX_GetActiveEngine()->GetTicRate());
 }
 
+
+static PyObject *gPySetRenderRate(PyObject *, PyObject *args)
+{
+	float renderrate;
+	if (!PyArg_ParseTuple(args, "f:setRenderRate", &renderrate)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetRenderRate(renderrate);
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPyGetRenderRate(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetRenderRate());
+}
+
+static PyObject *gPySetAnimationRate(PyObject *, PyObject *args)
+{
+	float animationrate;
+	if (!PyArg_ParseTuple(args, "f:setAnimationRate", &animationrate)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetAnimationRate(animationrate);
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPyGetAnimationRate(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetAnimationRate());
+}
+
 static PyObject *gPySetExitKey(PyObject *, PyObject *args)
 {
 	short exitkey;
@@ -420,8 +453,19 @@ static PyObject *gPySetMaxPhysicsFrame(PyObject *, PyObject *args)
 
 static PyObject *gPyGetMaxPhysicsFrame(PyObject *)
 {
-	return PyLong_FromLong(KX_GetActiveEngine()->GetMaxPhysicsFrame());
+	return PyBool_FromLong(KX_GetActiveEngine()->GetMaxPhysicsFrame());
 }
+/*
+static PyObject *gPySetNumIterations(PyObject *, PyObject *args)
+{
+	int numIterations;
+	if (!PyArg_ParseTuple(args, "f:setNumIterations", &numIterations)) {
+		return nullptr;
+	}
+
+	KX_GetPhysicsEnvironment()->SetNumIterations(numIterations);
+	Py_RETURN_NONE;
+}*/
 
 static PyObject *gPySetPhysicsTicRate(PyObject *, PyObject *args)
 {
@@ -457,6 +501,28 @@ static PyObject *gPyGetAverageFrameRate(PyObject *)
 	return PyFloat_FromDouble(KX_GetActiveEngine()->GetAverageFrameRate());
 }
 
+static PyObject *gPyGetAverageRenderRate(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetAverageRenderRate());
+}
+
+static PyObject *gPyGetUseRestrictAnimations(PyObject *)
+{
+	return PyBool_FromLong(KX_GetActiveEngine()->GetFlag(KX_KetsjiEngine::RESTRICT_ANIMATION));
+}
+
+static PyObject *gPySetUseRestrictAnimations(PyObject *, PyObject *args)
+{
+	int bUseRestrictAnimations;
+
+	if (!PyArg_ParseTuple(args, "p:setUseRestrictAnimations", &bUseRestrictAnimations)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetFlag(KX_KetsjiEngine::RESTRICT_ANIMATION, (bool)bUseRestrictAnimations);
+	Py_RETURN_NONE;
+}
+
 static PyObject *gPyGetUseExternalClock(PyObject *)
 {
 	return PyBool_FromLong(KX_GetActiveEngine()->GetFlag(KX_KetsjiEngine::USE_EXTERNAL_CLOCK));
@@ -481,7 +547,7 @@ static PyObject *gPyGetClockTime(PyObject *)
 
 static PyObject *gPySetClockTime(PyObject *, PyObject *args)
 {
-	double externalClockTime;
+	float externalClockTime;
 
 	if (!PyArg_ParseTuple(args, "d:setClockTime", &externalClockTime)) {
 		return nullptr;
@@ -515,6 +581,57 @@ static PyObject *gPySetTimeScale(PyObject *, PyObject *args)
 	}
 
 	KX_GetActiveEngine()->SetTimeScale(time_scale);
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPyGetLogicScale(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetLogicScale());
+}
+
+static PyObject *gPySetLogicScale(PyObject *, PyObject *args)
+{
+	double logic_scale;
+
+	if (!PyArg_ParseTuple(args, "d:setLogicScale", &logic_scale)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetLogicScale(logic_scale);
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPyGetPhysicsScale(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetPhysicsScale());
+}
+
+static PyObject *gPySetPhysicsScale(PyObject *, PyObject *args)
+{
+	double physics_scale;
+
+	if (!PyArg_ParseTuple(args, "d:setPhysicsScale", &physics_scale)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetPhysicsScale(physics_scale);
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPyGetAnimationsScale(PyObject *)
+{
+	return PyFloat_FromDouble(KX_GetActiveEngine()->GetAnimationsScale());
+}
+
+static PyObject *gPySetAnimationsScale(PyObject *, PyObject *args)
+{
+	double animations_scale;
+
+	if (!PyArg_ParseTuple(args, "d:setAnimationsScale", &animations_scale)) {
+		return nullptr;
+	}
+
+	KX_GetActiveEngine()->SetAnimationsScale(animations_scale);
 	Py_RETURN_NONE;
 }
 
@@ -655,7 +772,7 @@ static PyObject *gLibLoad(PyObject *, PyObject *args, PyObject *kwds)
 	KX_LibLoadStatus *status = nullptr;
 
 	short options = 0;
-	int load_actions = 0, verbose = 0, load_scripts = 1, asynchronous = 0;
+	int load_actions = 1, verbose = 0, load_scripts = 1, asynchronous = 1;
 
 	if (!EXP_ParseTupleArgsAndKeywords(args, kwds, "ss|y*iiIiO:LibLoad",
 	                                   {"path", "group", "buffer", "load_actions", "verbose", "load_scripts", "asynchronous", "scene", 0},
@@ -674,6 +791,7 @@ static PyObject *gLibLoad(PyObject *, PyObject *args, PyObject *kwds)
 	if (load_actions != 0) {
 		options |= BL_Converter::LIB_LOAD_LOAD_ACTIONS;
 	}
+	// Whether or not to print debugging information
 	if (verbose != 0) {
 		options |= BL_Converter::LIB_LOAD_VERBOSE;
 	}
@@ -835,8 +953,13 @@ static struct PyMethodDef game_methods[] = {
 	{"setMaxLogicFrame", (PyCFunction)gPySetMaxLogicFrame, METH_VARARGS, (const char *)"Sets the max number of logic frame per render frame"},
 	{"getMaxPhysicsFrame", (PyCFunction)gPyGetMaxPhysicsFrame, METH_NOARGS, (const char *)"Gets the max number of physics frame per render frame"},
 	{"setMaxPhysicsFrame", (PyCFunction)gPySetMaxPhysicsFrame, METH_VARARGS, (const char *)"Sets the max number of physics farme per render frame"},
+	//{"setNumIterations", (PyCFunction)gPySetNumIterations, METH_VARARGS, (const char *)"Sets the number of physics constraint updates per logic frame"},
 	{"getLogicTicRate", (PyCFunction)gPyGetLogicTicRate, METH_NOARGS, (const char *)"Gets the logic tic rate"},
 	{"setLogicTicRate", (PyCFunction)gPySetLogicTicRate, METH_VARARGS, (const char *)"Sets the logic tic rate"},
+	{"getRenderRate", (PyCFunction)gPyGetRenderRate, METH_NOARGS, (const char *)"Gets the render tic rate"},
+	{"setRenderRate", (PyCFunction)gPySetRenderRate, METH_VARARGS, (const char *)"Sets the render tic rate"},
+	{"getAnimationRate", (PyCFunction)gPyGetAnimationRate, METH_NOARGS, (const char *)"Gets the animation tic rate"},
+	{"setAnimationRate", (PyCFunction)gPySetAnimationRate, METH_VARARGS, (const char *)"Sets the animation tic rate"},
 	{"getPhysicsTicRate", (PyCFunction)gPyGetPhysicsTicRate, METH_NOARGS, (const char *)"Gets the physics tic rate"},
 	{"setPhysicsTicRate", (PyCFunction)gPySetPhysicsTicRate, METH_VARARGS, (const char *)"Sets the physics tic rate"},
 	{"getExitKey", (PyCFunction)gPyGetExitKey, METH_NOARGS, (const char *)"Gets the key used to exit the game engine"},
@@ -845,6 +968,8 @@ static struct PyMethodDef game_methods[] = {
 	{"getRender", (PyCFunction)gPyGetRender, METH_NOARGS, (const char *)"get the global render flag value"},
 	{"getUseExternalClock", (PyCFunction)gPyGetUseExternalClock, METH_NOARGS, (const char *)"Get if we use the time provided by an external clock"},
 	{"setUseExternalClock", (PyCFunction)gPySetUseExternalClock, METH_VARARGS, (const char *)"Set if we use the time provided by an external clock"},
+	{"getUseRestrictAnimations", (PyCFunction)gPyGetUseRestrictAnimations, METH_NOARGS, (const char *)"Get if we use restrict animations"},
+	{"setUseRestrictAnimations", (PyCFunction)gPySetUseRestrictAnimations, METH_VARARGS, (const char *)"Set if we use restrict animations"},
 	{"getClockTime", (PyCFunction)gPyGetClockTime, METH_NOARGS, (const char *)"Get the last BGE render time. "
 	 "The BGE render time is the simulated time corresponding to the next scene that will be renderered"},
 	{"setClockTime", (PyCFunction)gPySetClockTime, METH_VARARGS, (const char *)"Set the BGE render time. "
@@ -854,8 +979,15 @@ static struct PyMethodDef game_methods[] = {
 	{"getRealTime", (PyCFunction)gPyGetRealTime, METH_NOARGS, (const char *)"Get the real system time. "
 	 "The real-time corresponds to the system time" },
 	{"getAverageFrameRate", (PyCFunction)gPyGetAverageFrameRate, METH_NOARGS, (const char *)"Gets the estimated average frame rate"},
+	{"getAverageRenderRate", (PyCFunction)gPyGetAverageRenderRate, METH_NOARGS, (const char *)"Gets the estimated average render rate"},
 	{"getTimeScale", (PyCFunction)gPyGetTimeScale, METH_NOARGS, (const char *)"Get the time multiplier"},
 	{"setTimeScale", (PyCFunction)gPySetTimeScale, METH_VARARGS, (const char *)"Set the time multiplier"},
+	{"getLogicScale", (PyCFunction)gPyGetLogicScale, METH_NOARGS, (const char *)"Get the time multiplier"},
+	{"setLogicScale", (PyCFunction)gPySetLogicScale, METH_VARARGS, (const char *)"Set the time multiplier"},
+	{"getPhysicsScale", (PyCFunction)gPyGetPhysicsScale, METH_NOARGS, (const char *)"Get the time multiplier"},
+	{"setPhysicsScale", (PyCFunction)gPySetPhysicsScale, METH_VARARGS, (const char *)"Set the time multiplier"},
+	{"getAnimationsScale", (PyCFunction)gPyGetAnimationsScale, METH_NOARGS, (const char *)"Get the time multiplier"},
+	{"setAnimationsScale", (PyCFunction)gPySetAnimationsScale, METH_VARARGS, (const char *)"Set the time multiplier"},
 	{"getBlendFileList", (PyCFunction)gPyGetBlendFileList, METH_VARARGS, (const char *)"Gets a list of blend files in the same directory as the current blend file"},
 	{"PrintGLInfo", (PyCFunction)pyPrintExt, METH_NOARGS, (const char *)"Prints GL Extension Info"},
   {"getGraphicsCardVendor", (PyCFunction) gPyGetGraphicsCardVendor, METH_NOARGS, (const char *)"Gets graphics card vendor name"},
@@ -897,7 +1029,6 @@ static PyObject *gPySetBackgroundColor(PyObject *, PyObject *value)
 		PyErr_SetString(PyExc_RuntimeError, "bge.render.SetBackgroundColor(color), World not available");
 		return nullptr;
 	}
-	EXP_ShowDeprecationWarning("setBackgroundColor()", "KX_WorldInfo.horizonColor/zenithColor");
 	wi->setHorizonColor(vec);
 	wi->setZenithColor(vec);
 	Py_RETURN_NONE;
@@ -1174,15 +1305,11 @@ static PyObject *gPySetMaterialType(PyObject *,
                                     PyObject *args,
                                     PyObject *)
 {
-	EXP_ShowDeprecationWarning("setMaterialMode(mode)", "nothing");
-
 	Py_RETURN_NONE;
 }
 
 static PyObject *gPyGetMaterialType(PyObject *)
 {
-	EXP_ShowDeprecationWarning("getMaterialMode()", "nothing");
-
 	return PyLong_FromLong(0);
 }
 
@@ -1194,8 +1321,8 @@ static PyObject *gPySetAnisotropicFiltering(PyObject *, PyObject *args)
 		return nullptr;
 	}
 
-	if (level != 1 && level != 2 && level != 4 && level != 8 && level != 16) {
-		PyErr_SetString(PyExc_ValueError, "Rasterizer.setAnisotropicFiltering(level): Expected value of 1, 2, 4, 8, or 16 for value");
+	if (level != 2 && level != 4 && level != 8 && level != 16) {
+		PyErr_SetString(PyExc_ValueError, "Rasterizer.setAnisotropicFiltering(level): Expected value of 2, 4, 8, or 16 for value");
 		return nullptr;
 	}
 
@@ -1289,6 +1416,7 @@ static PyObject *gPySetWindowSize(PyObject *, PyObject *args)
 
 	KX_GetActiveEngine()->GetCanvas()->ResizeWindow(width, height);
 	Py_RETURN_NONE;
+	// be nice to pop the window on top here.
 }
 
 static PyObject *gPySetFullScreen(PyObject *, PyObject *value)
@@ -2214,7 +2342,7 @@ void updatePythonJoysticks(short(&addrem)[JOYINDEX_MAX])
 
 static struct PyModuleDef Rasterizer_module_def = {
 	PyModuleDef_HEAD_INIT,
-	"Rasterizer",  /* m_name */
+	"GameRender",  /* m_name */
 	Rasterizer_module_documentation,  /* m_doc */
 	0,  /* m_size */
 	rasterizer_methods,  /* m_methods */

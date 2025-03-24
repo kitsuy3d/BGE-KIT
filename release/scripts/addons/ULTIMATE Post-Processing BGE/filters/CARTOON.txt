@@ -1,0 +1,30 @@
+uniform sampler2D bgl_RenderedTexture; // Texture that stores the rendered frame
+uniform float Power = 1.5; // Control the intensity of the effect
+uniform float EdgeSlope = 1.5; // Control edge detection sensitivity
+
+const vec3 coefLuma = vec3(0.2126, 0.7152, 0.0722); // Luminance coefficients
+
+void main(void)
+{
+    vec2 texcoord = gl_TexCoord[0].st; // Texture coordinates
+    vec3 color = texture2D(bgl_RenderedTexture, texcoord).rgb;
+
+    // Calculate pixel size based on screen size
+    vec2 pixelSize = vec2(1.0 / float(textureSize(bgl_RenderedTexture, 0).x), 1.0 / float(textureSize(bgl_RenderedTexture, 0).y));
+
+    // Compute the edge detection
+    float diff1 = dot(coefLuma, texture2D(bgl_RenderedTexture, texcoord + pixelSize).rgb);
+    diff1 = dot(vec4(coefLuma, -1.0), vec4(texture2D(bgl_RenderedTexture, texcoord - pixelSize).rgb, diff1));
+
+    float diff2 = dot(coefLuma, texture2D(bgl_RenderedTexture, texcoord + pixelSize * vec2(1.0, -1.0)).rgb);
+    diff2 = dot(vec4(coefLuma, -1.0), vec4(texture2D(bgl_RenderedTexture, texcoord + pixelSize * vec2(-1.0, 1.0)).rgb, diff2));
+
+    // Compute the edge intensity
+    float edge = sqrt(diff1 * diff1 + diff2 * diff2);
+
+    // Apply the cartoon effect by darkening edges and keeping colors smooth
+    vec3 cartoonColor = color - pow(edge, EdgeSlope) * Power;
+
+    // Output the final color
+    gl_FragColor = vec4(cartoonColor, 1.0);
+}

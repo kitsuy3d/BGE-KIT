@@ -1,0 +1,18 @@
+import bge
+
+cont = bge.logic.getCurrentController()
+own = cont.owner
+scene = bge.logic.getCurrentScene()
+cam = scene.active_camera
+
+sun = scene.objects[own['Sun_Name']]
+
+screenPos = cam.getScreenPosition(sun)
+own["lf_sunX"] = screenPos[0]
+own["lf_sunY"] = 1 - screenPos[1]
+dis = own.getDistanceTo(sun)
+ray = own.rayCast(sun, own, dis, "")
+if ray[0] == None and cam.sphereInsideFrustum(sun.worldPosition, dis * 0.5) != cam.OUTSIDE:
+    own["sundirect"] = 1.0
+else:
+    own["sundirect"] = 0.0

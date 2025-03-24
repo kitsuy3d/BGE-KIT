@@ -225,10 +225,10 @@ extern "C" void StartKetsjiShell(struct bContext *C, struct ARegion *ar, rcti *c
 		launcher.InitEngine();
 
 		// CM_Message(std::endl << "Blender Game Engine Started");
-		CM_Message(termcolor::green << termcolor::bold << "Range Game Engine Started -----------" << termcolor::reset);
+		CM_Message(termcolor::green << termcolor::bold << "Game Engine Started -----------" << termcolor::reset);
 		exitInfo = launcher.EngineMainLoop();
 		// CM_Message("Blender Game Engine Finished");
-		CM_Message(termcolor::red << termcolor::bold << "Range Game Engine Finished ----------" << termcolor::reset);
+		CM_Message(termcolor::red << termcolor::bold << "Game Engine Finished ----------" << termcolor::reset);
 
 		gs = *launcher.GetGlobalSettings();
 

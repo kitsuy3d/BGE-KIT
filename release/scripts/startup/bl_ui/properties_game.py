@@ -27,7 +27,7 @@ class PhysicsButtonsPanel:
     bl_context = "physics"
 
 class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
-    bl_label = "Physics"
+    bl_label = "Object Physics"
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -57,7 +57,7 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
         layout.separator()
 
         if physics_type == 'CHARACTER':
-            layout.prop(game, "use_actor")
+            layout.prop(game, "use_actor", icon="POSE_HLT")
             layout.prop(ob, "hide_render", text="Invisible")  # out of place but useful
             
             # layout.separator()
@@ -79,14 +79,14 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
             split = layout.split()
 
             col = split.column()
-            col.prop(game, "use_actor")
-            col.prop(game, "use_ghost")
+            col.prop(game, "use_actor", icon="POSE_HLT")
+            col.prop(game, "use_ghost", icon="GHOST_ENABLED")
             col.prop(ob, "hide_render", text="Invisible")  # out of place but useful
 
             col = split.column()
-            col.prop(game, "use_physics_fh")
-            col.prop(game, "use_rotate_from_normal")
-            col.prop(game, "use_sleep")
+            col.prop(game, "use_physics_fh", icon="FORCE_FORCE")
+            col.prop(game, "use_rotate_from_normal", icon="DRIVER")
+            col.prop(game, "use_sleep", icon="BBOX")
 
             layout.separator()
 
@@ -152,8 +152,8 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
 
         elif physics_type == 'SOFT_BODY':
             col = layout.column()
-            col.prop(game, "use_actor")
-            col.prop(game, "use_ghost")
+            col.prop(game, "use_actor", icon="POSE_HLT")
+            col.prop(game, "use_ghost", icon="GHOST_ENABLED")
             col.prop(ob, "hide_render", text="Invisible")
 
             layout.separator()
@@ -222,8 +222,8 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
 
         elif physics_type == 'STATIC':
             col = layout.column()
-            col.prop(game, "use_actor")
-            col.prop(game, "use_ghost")
+            col.prop(game, "use_actor", icon="POSE_HLT")
+            col.prop(game, "use_ghost", icon="GHOST_ENABLED")
             col.prop(ob, "hide_render", text="Invisible")
 
             layout.separator()
@@ -247,7 +247,7 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
 
         elif physics_type == 'SENSOR':
             col = layout.column()
-            col.prop(game, "use_actor", text="Detect Actors")
+            col.prop(game, "use_actor", text="Detect Actors", icon="POSE_HLT")
             col.label(text="Sensor Attributes:")
             col.prop(game, "radius")
             col.prop(ob, "hide_render", text="Invisible")
@@ -274,7 +274,7 @@ class PHYSICS_PT_game_physics(PhysicsButtonsPanel, Panel):
 
             row = layout.row()
             row.prop(game, "fh_distance")
-            row.prop(game, "use_fh_normal")
+            row.prop(game, "use_fh_normal", icon="DRIVER")
 
 
 class PHYSICS_PT_game_collision_bounds(PhysicsButtonsPanel, Panel):
@@ -307,14 +307,15 @@ class PHYSICS_PT_game_collision_bounds(PhysicsButtonsPanel, Panel):
         row.prop(game, "collision_margin", text="Margin", slider=1)
 
         sub = row.row()
-        sub.active = game.physics_type not in {'SOFT_BODY', 'CHARACTER'}
-        sub.prop(game, "use_collision_compound", text="Children Compound")
+        if game.physics_type != "SOFT_BODY" and game.physics_type != "CHARACTER":sub.prop(game, "use_collision_compound", text="Children Compound", icon="GROUP")
 
         layout.separator()
         split = layout.split()
         col = split.column()
+        col.label(text="Group", icon="GROUP")
         col.prop(game, "collision_group")
         col = split.column()
+        col.label(text="Mask", icon="MOD_MASK")
         col.prop(game, "collision_mask")
 
 
@@ -367,9 +368,12 @@ class RENDER_PT_embedded(RenderButtonsPanel, Panel):
         rd = context.scene.render
 
         row = layout.row()
-        row.operator("view3d.game_start", text="Start")
+        col = row.column()
+        col.operator("view3d.game_start", text="Play", icon="LOGIC")
+        col = row.column()
+        col.label(text="Play", translate=1, icon="PLAY")
         row = layout.row()
-        row.label(text="Resolution:", icon="SCENE")
+        row.label(text="Resolution", icon="SCENE")
         row = layout.row(align=True)
         row.prop(rd, "resolution_x", slider=False, text="X")
         row.prop(rd, "resolution_y", slider=False, text="Y")
@@ -377,6 +381,7 @@ class RENDER_PT_embedded(RenderButtonsPanel, Panel):
 
 class RENDER_PT_game_player(RenderButtonsPanel, Panel):
     bl_label = "Standalone Player"
+    bl_options = {'HIDE_HEADER'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     def draw(self, context):
@@ -384,30 +389,106 @@ class RENDER_PT_game_player(RenderButtonsPanel, Panel):
         layout = self.layout
         not_osx = sys.platform != "darwin"
 
+        rd = context.scene.render
         gs = context.scene.game_settings
+        
+        #col = layout.split(percentage=0.5)
+        #col.prop(gs, "pro_mode")
 
-        row = layout.row()
-        row.operator("wm.blenderplayer_start", text="Start")
-        row = layout.row()
-        row.label(text="Resolution:", icon="SCENE")
-        row = layout.row(align=True)
-        row.active = not_osx or not gs.show_fullscreen
-        row.prop(gs, "resolution_x", slider=False, text="X")
-        row.prop(gs, "resolution_y", slider=False, text="Y")
-        row = layout.row()
-        col = row.column()
-        col.prop(gs, "show_fullscreen")
+        #gs = context.scene.game_settings
+        #userpref = context.user_preferences
+        #system = userpref.system
+        col = layout.split(percentage=0.5)
+        col.operator("wm.blenderplayer_start", text="UPBGE_Player")
+
+        split = layout.split(percentage=0.5)
+
+        split.operator("wm.velocityplayer_start", text="Velocity_Player")
+
+  
+        split.prop(gs, "show_fullscreen", icon="FULLSCREEN_ENTER", text="Fullscreen")
 
         if not_osx:
-            col = row.column()
-            col.prop(gs, "use_desktop")
-            col.active = gs.show_fullscreen
+            split = split.column()
+            split.prop(gs, "use_desktop", text="Desktop")
+            split.active = gs.show_fullscreen
 
-        col = layout.column()
-        col.label(text="Quality:")
-        col = layout.column(align=True)
-        col.prop(gs, "depth", text="Bit Depth", slider=False)
-        col.prop(gs, "frequency", text="Refresh Rate", slider=False)
+        row = layout.row(align=True)
+        row.label(text="Camera:")
+        row.prop(rd, "resolution_x", slider=False, text="X")
+        row.prop(rd, "resolution_y", slider=False, text="Y")
+
+        row = layout.row(align=True)
+        row.label(text="Resolution:")
+        row.prop(gs, "resolution_x", slider=False, text="X")
+        row.prop(gs, "resolution_y", slider=False, text="Y")
+
+        row = layout.row(align=True)
+        row.label(text="Quality:")
+        row.prop(gs, "frequency", text="Refresh Rate", slider=False)
+        row.prop(gs, "depth", text="Bit Depth", slider=False)
+
+        split = layout.split()
+
+        col = split.column()
+        row = col.row()
+        row.label(text="Vsync:")
+        row.prop(gs, "vsync", text="")
+
+        col = split.column()
+        row = col.row()
+        row.label(text="Anti-Aliasing:")
+        row.prop(gs, "samples", text="")
+        row = col.row()
+        row.label(text="HDR:")
+        row.prop(gs, "hdr", text="")
+
+        #row = layout.row()
+        #col = row.column()
+        #col.operator("wm.blenderplayer_start", text="Play", icon="LOGIC")
+        #col = row.column()
+        #col.label(text="Play", translate=1, icon="FULLSCREEN_ENTER")
+        #row = layout.row()
+        #row.label(text="Resolution", icon="SCENE")
+        #row = layout.row(align=True)
+        #row.active = not_osx or not gs.show_fullscreen
+        #row.prop(gs, "resolution_x", slider=False, text="X")
+        #row.prop(gs, "resolution_y", slider=False, text="Y")
+
+
+        #row = layout.row()
+        #col = row.column()
+        #col.label(text="Full")
+        #col.label(text="Screen")
+        #col.prop(gs, "show_fullscreen")
+
+        #if not_osx:
+        #    col = row.column()
+        #    col.label(text="Desktop")
+        #    col.label(text="Resolution")
+        #    col.prop(gs, "use_desktop")
+        #    col.active = gs.show_fullscreen
+
+        #col = layout.column()
+        #col.label(text="Quality:")
+        #col = layout.column(align=True)
+        #col.prop(gs, "depth", text="Bit Depth", slider=False)
+        #col.prop(gs, "frequency", text="Refresh Rate", slider=False)
+
+        #col.label(text="Textures:")
+        #col.prop(system, "gl_texture_limit", text="Limit Size")
+        #col.prop(system, "texture_time_out", text="Time Out")
+        #col.prop(system, "texture_collection_rate", text="Collection Rate")
+
+        #col.separator()
+
+        #col.label(text="Anisotropic Filtering")
+        #col.prop(system, "anisotropic_filter", text="")
+
+        #col.separator()
+
+        #col.label(text="Images Draw Method:")
+        #col.prop(system, "image_draw_method", text="")
 
 
 class RENDER_PT_game_stereo(RenderButtonsPanel, Panel):
@@ -441,15 +522,16 @@ class RENDER_PT_game_shading(RenderButtonsPanel, Panel):
         split = layout.split()
 
         col = split.column()
-        col.prop(gs, "use_glsl_lights", text="Lights", icon="LAMP_SPOT")
-        col.prop(gs, "use_glsl_shaders", text="Shaders", icon="LAMP_AREA")
-        col.prop(gs, "use_glsl_shadows", text="Shadows", icon="SNAP_FACE")
-        col.prop(gs, "use_glsl_environment_lighting", text="Environment Lighting", icon="SNAP_VOLUME")
-        col = split.column()
-        col.prop(gs, "use_glsl_ramps", text="Ramps", icon="IPO_BEZIER")
+        col.prop(gs, "use_glsl_lights", text="Light", icon="LAMP_SPOT")
+        col.prop(gs, "use_glsl_shaders", text="Shader", icon="LAMP_AREA")
+        col.prop(gs, "use_glsl_shadows", text="Shadow", icon="SNAP_FACE")
+        col.prop(gs, "use_glsl_ramps", text="Ramp", icon="IPO_BEZIER")
         col.prop(gs, "use_glsl_nodes", text="Nodes", icon="NODETREE")
-        col.prop(gs, "use_glsl_extra_textures", text="Extra Textures", icon="ASSET_MANAGER")
-
+        col = split.column()
+        col.prop(gs, "use_glsl_environment_lighting", text="Environment", icon="SNAP_VOLUME")
+        col.prop(gs, "use_glsl_environment_lighting", text="Light", icon="SNAP_VOLUME")
+        col.prop(gs, "use_glsl_extra_textures", text="Add", icon="ASSET_MANAGER")
+        col.prop(gs, "use_glsl_extra_textures", text="Textures", icon="ASSET_MANAGER")
 
 class RENDER_PT_game_system(RenderButtonsPanel, Panel):
     bl_label = "System"
@@ -459,21 +541,78 @@ class RENDER_PT_game_system(RenderButtonsPanel, Panel):
         layout = self.layout
 
         gs = context.scene.game_settings
+        #us = context.user_preferences
         split = layout.split(percentage=0.4)
 
         col = split.column()
-        col.prop(gs, "use_frame_rate")
-        col.prop(gs, "use_deprecation_warnings")
+        col.prop(gs, "use_frame_scale")
+        #if gs.pro_mode==True:col.prop(gs, "pro_mode")
+        #col.prop(gs, "pro_mode")
 
-        col = split.column()
-        col.prop(gs, "vsync", icon="RENDER_STILL")
-        col.prop(gs, "samples", icon="RENDER_STILL")
-        col.prop(gs, "hdr", icon="RENDER_STILL")
+        #col = split.column()
+        #col.prop(gs, "vsync", icon="RENDER_STILL")
+        #col.prop(gs, "samples", icon="RENDER_STILL")
+        #col.prop(gs, "hdr", icon="RENDER_STILL")
 
         row = layout.row()
         col = row.column()
         col.label("Game Exit Key:", icon="BLENDER")
         col.prop(gs, "exit_key", text="", event=True)
+
+
+class RENDER_PT_game_animations(RenderButtonsPanel, Panel):
+    bl_label = "Animations"
+    COMPAT_ENGINES = {'BLENDER_GAME'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        gs = context.scene.game_settings
+
+        layout.prop(context.scene.render, "fps", text="Animation Frame Rate")
+        layout.prop(gs, "use_restrict_animation_updates", icon="OUTLINER_OB_ARMATURE")
+
+
+class RENDER_PT_game_display(RenderButtonsPanel, Panel):
+    bl_label = "Display"
+    COMPAT_ENGINES = {'BLENDER_GAME'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        gs = context.scene.game_settings
+
+        row = layout.row()
+        row.prop(gs, "show_mouse", text="Mouse Cursor", icon='CURSOR')
+
+        col = layout.column()
+        col.label(text="Framing:")
+        col.row().prop(gs, "frame_type", expand=True)
+        col.prop(gs, "frame_color", text="")
+
+
+class RENDER_PT_game_debug(RenderButtonsPanel, Panel):
+    bl_label = "Debug"
+    COMPAT_ENGINES = {'BLENDER_GAME'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        gs = context.scene.game_settings
+
+        split = layout.split(percentage=0.4)
+
+        col = split.column()
+        col.prop(gs, "show_framerate_profile", text="Framerate and Profile", icon="HELP")
+        col.prop(gs, "show_render_queries", text="Render Queries", icon="SCENE")
+        col.prop(gs, "show_debug_properties", text="Properties", icon='LOGIC')
+        col.prop(gs, "show_physics_visualization", text="Physics Visualization", icon='PHYSICS')
+
+        col = split.column()
+        col.prop(gs, "show_bounding_box", text="Bounding Box")
+        col.prop(gs, "show_armatures", text="Armatures")
+        col.prop(gs, "show_camera_frustum", text="Camera Frustum")
+        col.prop(gs, "show_shadow_frustum", text="Shadow Frustum")
 
 class RENDER_UL_attachments(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -512,61 +651,6 @@ class RENDER_PT_game_attachments(RenderButtonsPanel, Panel):
                 row.prop(attachment, "size")
 
 
-class RENDER_PT_game_animations(RenderButtonsPanel, Panel):
-    bl_label = "Animations"
-    COMPAT_ENGINES = {'BLENDER_GAME'}
-
-    def draw(self, context):
-        layout = self.layout
-
-        gs = context.scene.game_settings
-
-        layout.prop(context.scene.render, "fps", text="Animation Frame Rate", slider=False)
-        layout.prop(gs, "use_restrict_animation_updates")
-
-
-class RENDER_PT_game_display(RenderButtonsPanel, Panel):
-    bl_label = "Display"
-    COMPAT_ENGINES = {'BLENDER_GAME'}
-
-    def draw(self, context):
-        layout = self.layout
-
-        gs = context.scene.game_settings
-
-        col = layout.column()
-        col.prop(gs, "show_mouse", text="Mouse Cursor")
-
-        col = layout.column()
-        col.label(text="Framing:")
-        col.row().prop(gs, "frame_type", expand=True)
-        col.prop(gs, "frame_color", text="")
-
-
-class RENDER_PT_game_debug(RenderButtonsPanel, Panel):
-    bl_label = "Debug"
-    COMPAT_ENGINES = {'BLENDER_GAME'}
-
-    def draw(self, context):
-        layout = self.layout
-
-        gs = context.scene.game_settings
-
-        split = layout.split(percentage=0.4)
-
-        col = split.column()
-        col.prop(gs, "show_framerate_profile", text="Framerate and Profile")
-        col.prop(gs, "show_render_queries", text="Render Queries")
-        col.prop(gs, "show_debug_properties", text="Properties")
-        col.prop(gs, "show_physics_visualization", text="Physics Visualization")
-
-        col = split.column()
-        col.prop(gs, "show_bounding_box", text="Bounding Box")
-        col.prop(gs, "show_armatures", text="Armatures")
-        col.prop(gs, "show_camera_frustum", text="Camera Frustum")
-        col.prop(gs, "show_shadow_frustum", text="Shadow Frustum")
-
-
 class SceneButtonsPanel:
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -574,7 +658,7 @@ class SceneButtonsPanel:
 
 
 class SCENE_PT_game_physics(SceneButtonsPanel, Panel):
-    bl_label = "Physics"
+    bl_label = "Scene Physics"
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -586,6 +670,7 @@ class SCENE_PT_game_physics(SceneButtonsPanel, Panel):
         layout = self.layout
 
         gs = context.scene.game_settings
+        us = context.user_preferences.view
 
         layout.prop(gs, "physics_engine", text="Engine")
         if gs.physics_engine != 'NONE':
@@ -597,37 +682,55 @@ class SCENE_PT_game_physics(SceneButtonsPanel, Panel):
             col = split.column()
             col.label(text="Physics Steps:")
             sub = col.column(align=True)
-            sub.prop(gs, "physics_step_max", text="Max")
+            #sub.prop(gs, "physics_step_max", text="Shadows_off(0)")
             sub.prop(gs, "physics_step_sub", text="Substeps")
 
-            col = split.column()
-            col.label(text="Logic Steps:")
-            col.prop(gs, "logic_step_max", text="Max")
+            if us.use_pro_mode==True:
+                col = split.column()
+                col.label(text="Sleep Timer:")
+                col.prop(gs, "sleep_timer", text="Sleep Timing")
 
             row = layout.row()
             row.prop(gs, "fps", text="FPS")
             row.prop(gs, "time_scale")
 
-            col = layout.column()
-            col.label(text="Physics Deactivation:")
-            sub = col.row(align=True)
-            sub.prop(gs, "deactivation_linear_threshold", text="Linear Threshold")
-            sub.prop(gs, "deactivation_angular_threshold", text="Angular Threshold")
-            sub = col.row()
-            sub.prop(gs, "deactivation_time", text="Time")
+            col = split.column()
+            col.prop(gs, "use_restrict_animation_updates", icon="OUTLINER_OB_ARMATURE")
+            col.prop(context.scene.render, "fps", text="Animation Frame Rate")
+
+
+            if us.use_pro_mode==True:
+                col = layout.column()
+                col.label(text="Physics Deactivation:")
+                sub = col.row(align=True)
+                sub.prop(gs, "deactivation_linear_threshold", text="Linear Threshold")
+                sub.prop(gs, "deactivation_angular_threshold", text="Angular Threshold")
+                sub = col.row()
+                sub.prop(gs, "deactivation_time", text="Time")
 
             split = layout.split()
 
             col = split.column()
             col.label(text="Culling:")
-            col.prop(gs, "use_occlusion_culling", text="Occlusion Culling")
+            col.prop(gs, "physics_step_max", text="Shadows")
+            col.prop(gs, "use_occlusion_culling", icon="RESTRICT_RENDER_ON")
+
+            #if gs.use_occlusion_culling==True:
+            #    row = col.row()
+            #    row.label(text="", icon="MONKEY")
             sub = col.column()
             sub.active = gs.use_occlusion_culling
             sub.prop(gs, "occlusion_culling_resolution", text="Resolution")
 
-            col = split.column()
-            col.label(text="Object Activity:")
-            col.prop(gs, "use_activity_culling")
+            #col = split.column()
+            #col.label(text="Object Activity:")
+            #row = col.row()
+            #if not gs.use_activity_culling==True:
+            #    row.label(text="", icon="OUTLINER_OB_ARMATURE")
+            #row.prop(gs, "use_activity_culling", text="", icon="CAMERA_DATA")
+            #row.label(text="", icon="OUTLINER_OB_ARMATURE")
+            #if not gs.use_activity_culling==True:
+            #    row.label(text="", icon="OUTLINER_OB_ARMATURE")
 
         else:
             split = layout.split()
@@ -637,13 +740,28 @@ class SCENE_PT_game_physics(SceneButtonsPanel, Panel):
             col.prop(gs, "fps", text="FPS")
 
             col = split.column()
-            col.label(text="Logic Steps:")
-            col.prop(gs, "logic_step_max", text="Max")
+            col.label(text="Sleep Timer:")
+            col.prop(gs, "sleep_timer", text="Sleep Timing")
+
+            #col = split.column()
+            #col.label(text="Logic Steps:")
+            #col.prop(gs, "logic_step_max", text="Max")
+
+            col = split.column()
+            col.label(text="Occlusion Culling:")
+            col.prop(gs, "use_occlusion_culling", icon="RESTRICT_RENDER_ON")
+            #if gs.use_occlusion_culling==True:
+            #    row = col.row()
+            #    row.label(text="", icon="MONKEY")
+            sub = col.column()
+            sub.active = gs.use_occlusion_culling
+            sub.prop(gs, "occlusion_culling_resolution", text="Resolution")
+
 
 
 class SCENE_PT_game_physics_obstacles(SceneButtonsPanel, Panel):
-    bl_label = "Obstacle Simulation"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_label = "Scene Statistics"
+    #bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -654,12 +772,13 @@ class SCENE_PT_game_physics_obstacles(SceneButtonsPanel, Panel):
     def draw(self, context):
         layout = self.layout
 
-        gs = context.scene.game_settings
+        scene = context.scene
+        layout.label(text=scene.statistics(), translate=0)
 
-        layout.prop(gs, "obstacle_simulation", text="Type")
-        if gs.obstacle_simulation != 'NONE':
-            layout.prop(gs, "level_height")
-            layout.prop(gs, "show_obstacle_simulation")
+        #layout.prop(gs, "obstacle_simulation", text="Type")
+        #if gs.obstacle_simulation != 'NONE':
+        #    layout.prop(gs, "level_height")
+        #    layout.prop(gs, "show_obstacle_simulation")
 
 
 class SCENE_PT_game_navmesh(SceneButtonsPanel, Panel):
@@ -726,6 +845,7 @@ class SCENE_PT_game_navmesh(SceneButtonsPanel, Panel):
 
 class SCENE_PT_game_hysteresis(SceneButtonsPanel, Panel):
     bl_label = "Level of Detail"
+    bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -746,6 +866,7 @@ class SCENE_PT_game_hysteresis(SceneButtonsPanel, Panel):
 
 class SCENE_PT_game_console(SceneButtonsPanel, Panel):
     bl_label = "Python Console"
+    bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -1008,12 +1129,16 @@ class OBJECT_MT_lod_tools(Menu):
 
 class OBJECT_MT_culling(ObjectButtonsPanel, Panel):
     bl_label = "Culling Bounding Volume"
+    bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
     def poll(cls, context):
-        ob = context.object
-        return context.scene.render.engine in cls.COMPAT_ENGINES and ob.type not in {'CAMERA', 'EMPTY', 'LAMP'}
+        userpref = context.user_preferences
+        view = userpref.view
+        if view.use_pro_mode==True:
+            ob = context.object
+            return context.scene.render.engine in cls.COMPAT_ENGINES and ob.type not in {'CAMERA', 'EMPTY', 'LAMP'}
 
     def draw(self, context):
         layout = self.layout
@@ -1038,22 +1163,24 @@ class OBJECT_PT_activity_culling(ObjectButtonsPanel, Panel):
         split = layout.split()
 
         col = split.column()
-        col.prop(activity, "use_physics", text="Physics")
+        col.prop(activity, "use_physics", text="Physics + Logic + Render", icon="BBOX")
         sub = col.box()
         sub.active = activity.use_physics
         sub.prop(activity, "physics_radius")
-        sub.prop(activity, "sleep_velocity", text="Sleep Velocity")
+        #sub.prop(activity, "use_physics_low", text="Low Physics Mode", icon='DOWNARROW_HLT')
+        #sub.prop(activity, "sleep_velocity", text="Sleep Velocity", icon="OUTLINER_OB_ARMATURE")
 
         col = split.column()
-        col.prop(activity, "use_logic", text="Logic")
+        col.prop(activity, "use_logic", text="Logic + Render", icon="LOGIC")
         sub = col.box()
         sub.active = activity.use_logic
         sub.prop(activity, "logic_radius")
-        sub = sub.column()
-        sub.prop(activity, "activity_components", text="No Components")
+        #sub = sub.column()
+        #sub.prop(activity, "activity_components", text="No Components", icon='LINKED')
 
 class OBJECT_PT_levels_of_detail(ObjectButtonsPanel, Panel):
     bl_label = "Levels of Detail"
+    bl_options = {'DEFAULT_CLOSED'}
     COMPAT_ENGINES = {'BLENDER_GAME'}
 
     @classmethod
@@ -1080,8 +1207,8 @@ class OBJECT_PT_levels_of_detail(ObjectButtonsPanel, Panel):
             row = box.row()
             row.prop(level, "distance")
             row = row.row(align=True)
-            row.prop(level, "use_mesh", text="")
-            row.prop(level, "use_material", text="")
+            row.prop(level, "use_mesh", text="Mesh")
+            row.prop(level, "use_material", text="Material")
 
             row = box.row()
             row.active = gs.use_scene_hysteresis
@@ -1096,34 +1223,34 @@ class OBJECT_PT_levels_of_detail(ObjectButtonsPanel, Panel):
 
 
 classes = (
-    PHYSICS_PT_game_physics,
     PHYSICS_PT_game_collision_bounds,
-    PHYSICS_PT_game_obstacles,
-    RENDER_PT_embedded,
+    PHYSICS_PT_game_physics,
+    #PHYSICS_PT_game_obstacles,
+    #RENDER_PT_embedded,
     RENDER_PT_game_player,
-    RENDER_PT_game_stereo,
+    #RENDER_PT_game_stereo,
     RENDER_PT_game_shading,
     RENDER_PT_game_system,
-    RENDER_PT_game_attachments,
-    RENDER_PT_game_animations,
+    #RENDER_PT_game_animations,
     RENDER_PT_game_display,
     RENDER_PT_game_debug,
 	RENDER_UL_attachments,
-    SCENE_PT_game_physics,
+    #RENDER_PT_game_attachments,
     SCENE_PT_game_physics_obstacles,
-    SCENE_PT_game_navmesh,
+    SCENE_PT_game_physics,
     SCENE_PT_game_hysteresis,
     SCENE_PT_game_console,
     SCENE_PT_game_audio,
+    SCENE_PT_game_navmesh,
     WORLD_PT_game_context_world,
     WORLD_PT_game_world,
     WORLD_PT_game_environment_lighting,
     WORLD_PT_game_mist,
     DATA_PT_shadow_game,
     OBJECT_MT_lod_tools,
-    OBJECT_MT_culling,
     OBJECT_PT_activity_culling,
     OBJECT_PT_levels_of_detail,
+    OBJECT_MT_culling,
 )
 
 if __name__ == "__main__":  # only for live edit.

@@ -110,8 +110,6 @@ PyObject *SCA_PythonKeyboard::pyattr_get_events(EXP_PyObjectPlus *self_v, const 
 {
 	SCA_PythonKeyboard *self = static_cast<SCA_PythonKeyboard *>(self_v);
 
-	EXP_ShowDeprecationWarning("keyboard.events", "keyboard.inputs");
-
 	PyObject *dict = PyDict_New();
 
 	for (int i = SCA_IInputDevice::BEGINKEY; i <= SCA_IInputDevice::ENDKEY; i++)
@@ -179,8 +177,6 @@ PyObject *SCA_PythonKeyboard::pyattr_get_active_inputs(EXP_PyObjectPlus *self_v,
 PyObject *SCA_PythonKeyboard::pyattr_get_active_events(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	SCA_PythonKeyboard *self = static_cast<SCA_PythonKeyboard *>(self_v);
-
-	EXP_ShowDeprecationWarning("keyboard.active_events", "keyboard.activeInputs");
 
 	PyObject *dict = PyDict_New();
 

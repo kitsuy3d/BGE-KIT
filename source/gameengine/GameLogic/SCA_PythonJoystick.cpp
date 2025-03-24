@@ -110,7 +110,6 @@ PyObject *SCA_PythonJoystick::pyattr_get_num_x(EXP_PyObjectPlus *self_v,
     return PyLong_FromLong(JOYAXIS_MAX);
   }
   else if (attrdef->m_name == "numHats") {
-    EXP_ShowDeprecationWarning("SCA_PythonJoystick.numHats", "SCA_PythonJoystick.numButtons");
     return PyLong_FromLong(0);
   }
 
@@ -144,7 +143,6 @@ PyObject *SCA_PythonJoystick::pyattr_get_active_buttons(EXP_PyObjectPlus *self_v
 PyObject *SCA_PythonJoystick::pyattr_get_hat_values(EXP_PyObjectPlus *self_v,
                                                     const EXP_PYATTRIBUTE_DEF *attrdef)
 {
-  EXP_ShowDeprecationWarning("SCA_PythonJoystick.hatValues", "SCA_PythonJoystick.activeButtons");
   return PyList_New(0);
 }
 

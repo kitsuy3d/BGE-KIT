@@ -279,7 +279,7 @@ bool DEV_Joystick::CreateJoystickDevice(void)
 		}
 
 		if (!joy_error) {
-			CM_Debug("Game Controller (" << GetName() << ") with index " << m_joyindex << " initialized");
+			//CM_Debug("Game Controller (" << GetName() << ") with index " << m_joyindex << " initialized");
 
 			/* A Game Controller has:
 			 *
@@ -301,10 +301,10 @@ bool DEV_Joystick::CreateJoystickDevice(void)
 		/* Haptic configuration */
 		if (!joy_error && SDL_CHECK(SDL_HapticOpen)) {
 			m_private->m_haptic = SDL_HapticOpen(m_joyindex);
-			if (!m_private->m_haptic) {
-				CM_Warning("Game Controller (" << GetName() << ") with index " << m_joyindex
-				                               << " has not force feedback (vibration) available");
-			}
+			//if (!m_private->m_haptic) {
+			//	CM_Warning("Game Controller (" << GetName() << ") with index " << m_joyindex
+			//	                               << " has not force feedback (vibration) available");
+			//}
 		}
 	}
 #endif /* WITH_SDL */
@@ -331,7 +331,7 @@ void DEV_Joystick::DestroyJoystickDevice(void)
 		}
 
 		if (m_private->m_gamecontroller && SDL_CHECK(SDL_GameControllerClose)) {
-			CM_Debug("Game Controller (" << GetName() << ") with index " << m_joyindex << " closed");
+			//CM_Debug("Game Controller (" << GetName() << ") with index " << m_joyindex << " closed");
 			SDL_GameControllerClose(m_private->m_gamecontroller);
 			m_private->m_gamecontroller = nullptr;
 		}

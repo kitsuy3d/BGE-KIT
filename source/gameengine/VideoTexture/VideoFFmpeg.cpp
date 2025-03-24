@@ -332,7 +332,7 @@ void *VideoFFmpeg::cacheThread(void *data)
 		frameFinished = 0;
 		while (!endOfFile
 		       && (cachePacket = (CachePacket *)video->m_packetCacheFree.first) != nullptr
-		       && frameFinished < 25)
+		       && frameFinished < 1)
 		{
 			// free packet => packet cache is not full yet, just read more
 			if (av_read_frame(video->m_formatCtx, &cachePacket->packet) >= 0) {
@@ -428,7 +428,7 @@ void *VideoFFmpeg::cacheThread(void *data)
 			}
 		}
 		// small sleep to avoid unnecessary looping
-		PIL_sleep_ms(10);
+		PIL_sleep_ms(1);
 	}
 	// before quitting, put back the current frame to queue to allow freeing
 	if (currentFrame) {

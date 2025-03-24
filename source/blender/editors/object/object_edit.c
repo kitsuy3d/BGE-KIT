@@ -1784,7 +1784,7 @@ void OBJECT_OT_game_property_new(wmOperatorType *ot)
 {
 	/* identifiers */
 	ot->name = "New Game Property";
-	ot->description = "Create a new property available to the game engine";
+	ot->description = "Create a new property available to the game engine, Python: own['prop'] = obj";
 	ot->idname = "OBJECT_OT_game_property_new";
 
 	/* api callbacks */
@@ -1825,7 +1825,7 @@ void OBJECT_OT_game_property_remove(wmOperatorType *ot)
 {
 	/* identifiers */
 	ot->name = "Remove Game Property";
-	ot->description = "Remove game property";
+	ot->description = "Remove game property, Python: del own['prop']";
 	ot->idname = "OBJECT_OT_game_property_remove";
 
 	/* api callbacks */

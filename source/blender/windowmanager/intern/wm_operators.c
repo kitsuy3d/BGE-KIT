@@ -1375,8 +1375,11 @@ static uiBlock *wm_block_create_splash(bContext *C, ARegion *ar, void *UNUSED(ar
 	extern char build_hash[], build_commit_date[], build_commit_time[], build_branch[];
 
 	/* Builds made from tag only shows tag sha */
-	BLI_snprintf(hash_buf, sizeof(hash_buf), "Hash: %s", build_hash);
-	BLI_snprintf(date_buf, sizeof(date_buf), "Date: %s %s", build_commit_date, build_commit_time);
+	//BLI_snprintf(hash_buf, sizeof(hash_buf), "Hash: %s", build_hash);
+	//BLI_snprintf(date_buf, sizeof(date_buf), "Date: %s %s", build_commit_date, build_commit_time);
+
+	BLI_snprintf(hash_buf, sizeof(hash_buf), "", build_hash);
+	BLI_snprintf(date_buf, sizeof(date_buf), "Date: 4-29-2024", build_commit_date, build_commit_time);
 
 	BLF_size(style->widgetlabel.uifont_id, style->widgetlabel.points, U.pixelsize * U.dpi);
 	hash_width = (int)BLF_width(style->widgetlabel.uifont_id, hash_buf, sizeof(hash_buf)) + U.widget_unit;
@@ -1471,7 +1474,8 @@ static uiBlock *wm_block_create_splash(bContext *C, ARegion *ar, void *UNUSED(ar
 	if (!STREQ(build_branch, "master")) {
 		char branch_buf[128] = "\0";
 		int branch_width;
-		BLI_snprintf(branch_buf, sizeof(branch_buf), "Branch: %s", build_branch);
+		//BLI_snprintf(branch_buf, sizeof(branch_buf), "Branch: %s", build_branch);
+		BLI_snprintf(branch_buf, sizeof(branch_buf), "", build_branch);
 		branch_width = (int)BLF_width(style->widgetlabel.uifont_id, branch_buf, sizeof(branch_buf)) + U.widget_unit;
 		uiDefBut(block, UI_BTYPE_LABEL, 0, branch_buf, U.pixelsize * 494 - branch_width, U.pixelsize * (258 - label_delta), branch_width, UI_UNIT_Y, NULL, 0, 0, 0, 0, NULL);
 	}
@@ -1497,10 +1501,10 @@ static uiBlock *wm_block_create_splash(bContext *C, ARegion *ar, void *UNUSED(ar
 	uiItemO(col, "Open Console", ICON_CONSOLE, "WM_OT_console_toggle");
 	uiItemO(col, NULL, ICON_RECOVER_LAST, "WM_OT_recover_last_session");
 
-	uiItemL(col, IFACE_("Info:"), ICON_HELP);
+	//uiItemL(col, IFACE_("Info:"), ICON_HELP);
 
-	uiItemStringO(col, IFACE_("RanGE - Website"), ICON_URL, "WM_OT_url_open", "url", "https://rangeengine.tech");
-	uiItemStringO(col, IFACE_("RanGE - Python API"), ICON_URL, "WM_OT_url_open", "url", "https://rangeengine.tech/RangeDoc_Build/html/");
+	//uiItemStringO(col, IFACE_("Upbge - Website"), ICON_URL, "WM_OT_url_open", "url", "https://upbge.org/#/");
+	//uiItemStringO(col, IFACE_("Upbge - Python API"), ICON_URL, "WM_OT_url_open", "url", "https://upbge.org/docs/v0.2.5/index.html");
 
 	uiItemL(col, "", ICON_NONE);
 
@@ -3095,6 +3099,7 @@ void wm_operatortypes_register(void)
 	WM_operatortype_append(WM_OT_recover_last_session);
 	WM_operatortype_append(WM_OT_recover_auto_save);
 	WM_operatortype_append(WM_OT_save_as_mainfile);
+	WM_operatortype_append(WM_OT_save_as_mainfile_protected);
 	WM_operatortype_append(WM_OT_save_mainfile);
 	WM_operatortype_append(WM_OT_redraw_timer);
 	WM_operatortype_append(WM_OT_memory_statistics);

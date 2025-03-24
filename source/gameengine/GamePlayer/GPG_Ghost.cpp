@@ -1502,7 +1502,7 @@ int main(int argc,
 									}
 								}
 								else {
-									title = "blenderplayer";
+									title = "player";
 								}
 #ifdef WIN32
 								if (scr_saver_mode == SCREEN_SAVER_MODE_PREVIEW) {
@@ -1612,10 +1612,11 @@ int main(int argc,
 
 	int totblock = MEM_get_memory_blocks_in_use();
 	if (totblock != 0) {
-		CM_Error("totblock: " << totblock);
+	//	CM_Error("totblock: " << totblock);
 		MEM_set_error_callback(mem_error_cb);
 		MEM_printmemlist();
 	}
+
 
 	BKE_tempdir_session_purge();
 

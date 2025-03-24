@@ -168,7 +168,7 @@ class DATA_PT_culling(CameraButtonsPanel, Panel):
         col = split.column()
         col.label(text="Frustum Culling:")
         col.prop(cam, "show_frustum")
-        col.prop(cam, "override_culling")
+        #col.prop(cam, "override_culling")
 
         col = split.column()
         col.label(text="Object Activity:")

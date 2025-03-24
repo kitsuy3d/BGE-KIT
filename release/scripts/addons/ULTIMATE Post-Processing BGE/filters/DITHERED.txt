@@ -1,0 +1,53 @@
+
+// by Naut
+
+// PT-BR { use attachments para transparencia customizada
+// use [alpha = adcionar] e [cor = preta] no material transparente
+
+// EN { use attachments for custom transparency
+// use [alpha = add] and [color = black] on the transparent material
+
+uniform sampler2D bgl_RenderedTexture;
+uniform sampler2D bgl_DataTextures[7];
+
+vec2 texcoord = gl_TexCoord[0].st;
+
+const int level = 4;
+const float intensity = 16.0;
+const float alpha = 2.0;
+
+const int ditherMatrix[4][4] = int[4][4](
+	int[4]( 0,  8,  2, 10),
+	int[4](12,  4, 14,  6),
+	int[4]( 3, 11,  1,  9),
+	int[4](15,  7, 13,  5)
+);
+
+vec3 applyDithering(vec3 col, float value) {
+	return vec3(
+		(col.r < value) ? 0.0 : 1.0,
+		(col.g < value) ? 0.0 : 1.0,
+		(col.b < value) ? 0.0 : 1.0
+	);
+}
+
+vec3 toRGB(vec3 col) {
+	return pow(col, vec3(1.0 / 2.2));
+}
+
+void main() {
+	ivec2 pos = ivec2(mod(gl_FragCoord.xy, level));
+
+	float threshold = ditherMatrix[pos.x][pos.y] / intensity;
+
+	vec3 color = texture(bgl_RenderedTexture, texcoord).rgb;
+	vec3 transparent = texture(bgl_DataTextures[0], texcoord).rgb;
+
+	vec3 dithered = applyDithering(color, threshold);
+
+	if (length(transparent) > (threshold * alpha)) {
+		gl_FragColor.rgb = transparent;
+	} else {
+		gl_FragColor.rgb = toRGB(dithered);
+	}
+}

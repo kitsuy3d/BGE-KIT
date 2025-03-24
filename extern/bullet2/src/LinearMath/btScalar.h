@@ -275,12 +275,12 @@ inline int	btGetVersion()
 
 typedef double btScalar;
 //this number could be bigger in double precision
-#define BT_LARGE_FLOAT 1e30
+#define BT_LARGE_FLOAT 1e32
 #else
 
 typedef float btScalar;
 //keep BT_LARGE_FLOAT*BT_LARGE_FLOAT < FLT_MAX
-#define BT_LARGE_FLOAT 1e18f
+#define BT_LARGE_FLOAT 1e20f
 #endif
 
 #ifdef BT_USE_SSE

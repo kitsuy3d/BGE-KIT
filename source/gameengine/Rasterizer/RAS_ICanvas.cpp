@@ -97,7 +97,7 @@ RAS_ICanvas::~RAS_ICanvas()
 
 void RAS_ICanvas::SetSwapControl(SwapControl control)
 {
-	m_swapControl = control;
+	m_swapControl = VSYNC_OFF;
 }
 
 RAS_ICanvas::SwapControl RAS_ICanvas::GetSwapControl() const

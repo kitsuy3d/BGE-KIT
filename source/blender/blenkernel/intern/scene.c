@@ -766,7 +766,7 @@ void BKE_scene_init(Scene *sce)
 	sce->gm.ticrate = 60;
 	sce->gm.maxlogicstep = 5;
 	sce->gm.physubstep = 1;
-	sce->gm.maxphystep = 5;
+	sce->gm.maxphystep = 1;
 	sce->gm.timeScale = 1.0f;
 	sce->gm.lineardeactthreshold = 0.8f;
 	sce->gm.angulardeactthreshold = 1.0f;

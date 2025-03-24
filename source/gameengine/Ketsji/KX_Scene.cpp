@@ -75,7 +75,7 @@
 #include "SCA_IActuator.h"
 #include "SG_Node.h"
 #include "SG_Controller.h"
-#include "SG_Node.h"
+//#include "SG_Node.h"
 #include "DNA_group_types.h"
 #include "DNA_scene_types.h"
 #include "DNA_property_types.h"
@@ -151,13 +151,18 @@ KX_Scene::KX_Scene(SCA_IInputDevice *inputDevice,
 	m_ueberExecutionPriority(0),
 	m_suspend(false),
 	m_suspendedDelta(0.0),
-	m_activityCulling(false),
+	m_animTimeStep(0.0),
+	//m_activityCulling(false),
 	m_dbvtCulling(false),
+	//m_dHalfCulling(false),
 	m_dbvtOcclusionRes(0),
 	m_blenderScene(scene),
-	m_previousAnimTime(0.0f),
+	//m_previousAnimTime(0),
 	m_isActivedHysteresis(false),
-	m_lodHysteresisValue(0)
+	m_lodHysteresisValue(0),
+	m_dist(0.0),
+	m_lodfactor(0.0),
+	m_timeleft(0.0)
 {
 
 	m_objectlist = new EXP_ListValue<KX_GameObject>();
@@ -166,6 +171,7 @@ KX_Scene::KX_Scene(SCA_IInputDevice *inputDevice,
 	m_inactivelist = new EXP_ListValue<KX_GameObject>();
 	m_cameralist = new EXP_ListValue<KX_Camera>();
 	m_fontlist = new EXP_ListValue<KX_FontObject>();
+	m_renderlist = new EXP_ListValue<KX_GameObject>();
 
 	bool useFxaa = (scene->gm.aasamples == 1);
 	m_filterManager = new KX_2DFilterManager(useFxaa);
@@ -248,6 +254,10 @@ KX_Scene::~KX_Scene()
 
 	if (m_fontlist) {
 		m_fontlist->Release();
+	}
+
+	if (m_renderlist) {
+		m_renderlist->Release();
 	}
 
 	if (m_filterManager) {
@@ -351,6 +361,11 @@ EXP_ListValue<KX_FontObject> *KX_Scene::GetFontList() const
 	return m_fontlist;
 }
 
+EXP_ListValue<KX_GameObject> *KX_Scene::GetRenderList() const
+{
+	return m_renderlist;
+}
+
 SCA_LogicManager *KX_Scene::GetLogicManager() const
 {
 	return m_logicmgr;
@@ -396,11 +411,11 @@ void KX_Scene::Resume()
 	m_suspend = false;
 }
 
-void KX_Scene::SetActivityCulling(bool b)
+/*void KX_Scene::SetActivityCulling(bool b)
 {
 	m_activityCulling = b;
 }
-
+*/
 bool KX_Scene::IsSuspended() const
 {
 	return m_suspend;
@@ -496,9 +511,9 @@ KX_GameObject *KX_Scene::AddNodeReplicaObject(SG_Node *node, KX_GameObject *game
 	SG_Node *replicanode = newobj->GetNode();
 
 	// Add the object in the obstacle simulation if needed.
-	if (m_obstacleSimulation && gameobj->GetBlenderObject()->gameflag & OB_HASOBSTACLE) {
-		m_obstacleSimulation->AddObstacleForObj(newobj);
-	}
+	//if (m_obstacleSimulation && gameobj->GetBlenderObject()->gameflag & OB_HASOBSTACLE) {
+	//	m_obstacleSimulation->AddObstacleForObj(newobj);
+	//}
 	// Reconstruct nav mesh.
 	if (gameobj->GetGameObjectType() == SCA_IObject::OBJ_NAVMESH) {
 		static_cast<KX_NavMeshObject *>(gameobj)->BuildNavMesh();
@@ -513,6 +528,14 @@ KX_GameObject *KX_Scene::AddNodeReplicaObject(SG_Node *node, KX_GameObject *game
 
 	// This is the list of object that are send to the graphics pipeline.
 	m_objectlist->Add(CM_AddRef(newobj));
+	// add to render list
+	//if ((!gameobj->GetMeshList().empty()) && gameobj->GetVisible()) {
+	if (gameobj->GetVisible()) {
+		m_renderlist->Add(CM_AddRef(newobj));
+	}
+	if (gameobj->GetActivityCullingInfo().m_flags != KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
+		AddCullingObject(newobj);
+	}
 
 	switch (newobj->GetGameObjectType()) {
 		case SCA_IObject::OBJ_LIGHT:
@@ -782,7 +805,8 @@ void KX_Scene::DupliGroupRecurse(KX_GameObject *groupobj, int level)
 		gameobj->Relink(m_map_gameobject_to_replica);
 		gameobj->AddMeshUser();
 		// Always make sure that the bounding box is valid.
-		gameobj->UpdateBounds(true);
+		//gameobj->UpdateBounds(true);
+		UpdateBoundsTrue(gameobj);
 		// Add the object in the layer of the parent.
 		gameobj->SetLayer(groupobj->GetLayer());
 	}
@@ -881,7 +905,8 @@ KX_GameObject *KX_Scene::AddReplicaObject(KX_GameObject *originalobj, KX_GameObj
 		gameobj->Relink(m_map_gameobject_to_replica);
 		gameobj->AddMeshUser();
 		// Always make sure that the bounding box is valid.
-		gameobj->UpdateBounds(true);
+		//gameobj->UpdateBounds(true);
+		UpdateBoundsTrue(gameobj);
 
 		if (referenceobj) {
 			// Add the object in the layer of the reference object.
@@ -927,6 +952,31 @@ void KX_Scene::RemoveObject(KX_GameObject *gameobj)
 	}
 }
 
+void KX_Scene::InvalidateProxy(KX_GameObject *gameobj)
+{
+	gameobj->InvalidateProxy();
+}
+
+void KX_Scene::RemoveMeshes(KX_GameObject *gameobj)
+{
+	gameobj->RemoveMeshes();
+}
+
+void KX_Scene::UpdateBoundsFalse(KX_GameObject *gameobj)
+{
+	gameobj->UpdateBounds(false);
+}
+
+void KX_Scene::UpdateBoundsTrue(KX_GameObject *gameobj)
+{
+	gameobj->UpdateBounds(true);
+}
+
+void KX_Scene::ClearModified()
+{
+	m_boundingBoxManager->ClearModified();
+}
+
 void KX_Scene::RemoveDupliGroup(KX_GameObject *gameobj)
 {
 	if (gameobj->GetInstanceObjects()) {
@@ -966,7 +1016,8 @@ bool KX_Scene::NewRemoveObject(KX_GameObject *gameobj)
 	 *
 	 * if for some reason the object is added back into the scene python can always get a new Proxy
 	 */
-	gameobj->InvalidateProxy();
+	//gameobj->InvalidateProxy();
+	InvalidateProxy(gameobj);
 
 	/* Keep the blender->game object association up to date
 	 * note that all the replicas of an object will have the same
@@ -1025,7 +1076,8 @@ bool KX_Scene::NewRemoveObject(KX_GameObject *gameobj)
 
 	m_componentManager.UnregisterObject(gameobj);
 
-	gameobj->RemoveMeshes();
+	//gameobj->RemoveMeshes();
+	RemoveMeshes(gameobj);
 
 	m_rendererManager->InvalidateViewpoint(gameobj);
 
@@ -1048,8 +1100,12 @@ bool KX_Scene::NewRemoveObject(KX_GameObject *gameobj)
 	if (m_cameralist->RemoveValue(gameobj)) {
 		ret = (gameobj->Release() != nullptr);
 	}
+	if (m_renderlist->RemoveValue(gameobj)) {
+		ret = (gameobj->Release() != nullptr);
+	}
 
 	// WARNING: 'gameobj' maybe be freed now, only compare, don't access.
+	CM_ListRemoveIfFound(m_cullinglist, gameobj);
 	CM_ListRemoveIfFound(m_animatedlist, gameobj);
 	CM_ListRemoveIfFound(m_euthanasyobjects, gameobj);
 	CM_ListRemoveIfFound(m_tempObjectList, gameobj);
@@ -1112,11 +1168,11 @@ std::vector<KX_GameObject *> KX_Scene::CalculateVisibleMeshes(KX_Camera *cam, RA
 {
 	std::vector<KX_GameObject *> objects;
 	if (!cam->GetFrustumCulling()) {
-		for (KX_GameObject *gameobj : m_objectlist) {
+		for (KX_GameObject *gameobj : m_renderlist) {
 			if (!gameobj->Renderable(layer)) {
 				continue;
 			}
-			gameobj->GetCullingNode().SetCulled(false);
+			//gameobj->GetCullingNode().SetCulled(false); // not needed I think.
 			objects.push_back(gameobj);
 		}
 		return objects;
@@ -1132,13 +1188,13 @@ std::vector<KX_GameObject *> KX_Scene::CalculateVisibleMeshes(const SG_Frustum& 
 
 	bool dbvt_culling = false;
 	if (m_dbvtCulling) {
-		for (KX_GameObject *gameobj : m_objectlist) {
+		for (KX_GameObject *gameobj : m_renderlist) {
 			/* Reset KX_GameObject m_culled to true before doing culling
 			 * since DBVT culling will only set it to false.
 			 */
 			gameobj->GetCullingNode().SetCulled(true);
-			// Update the object bounding volume box.
-			gameobj->UpdateBounds(false);
+			//Update the object bounding volume box.
+			UpdateBoundsFalse(gameobj);
 		}
 
 		// Test culling through Bullet, get the clip planes.
@@ -1151,11 +1207,11 @@ std::vector<KX_GameObject *> KX_Scene::CalculateVisibleMeshes(const SG_Frustum& 
 	}
 
 	if (!dbvt_culling) {
-		KX_CullingHandler handler(m_objectlist, frustum, layer);
+		KX_CullingHandler handler(m_renderlist, frustum, layer);
 		objects = handler.Process();
 	}
 
-	m_boundingBoxManager->ClearModified();
+	ClearModified();
 
 	return objects;
 }
@@ -1267,10 +1323,10 @@ void KX_Scene::LogicBeginFrame(double curtime, double framestep)
 		EXP_FloatValue *propval = static_cast<EXP_FloatValue *>(gameobj->GetProperty("::timebomb"));
 
 		if (propval) {
-			const float timeleft = propval->GetNumber() - framestep;
+			m_timeleft = propval->GetNumber() - framestep;
 
-			if (timeleft > 0) {
-				propval->SetFloat(timeleft);
+			if (m_timeleft > 0.0) {
+				propval->SetFloat(m_timeleft);
 			}
 			else {
 				// Remove obj, remove the object from tempObjectList in NewRemoveObject only.
@@ -1290,10 +1346,20 @@ void KX_Scene::AddAnimatedObject(KX_GameObject *gameobj)
 	CM_ListAddIfNotFound(m_animatedlist, gameobj);
 }
 
+void KX_Scene::AddCullingObject(KX_GameObject *gameobj)
+{
+	CM_ListAddIfNotFound(m_cullinglist, gameobj);
+}
+
+void KX_Scene::RemoveCullingObject(KX_GameObject *gameobj)
+{
+	CM_ListRemoveIfFound(m_cullinglist, gameobj);
+}
+
 static void update_anim_thread_func(TaskPool *pool, void *taskdata, int UNUSED(threadid))
 {
 	KX_Scene::AnimationPoolData *data = (KX_Scene::AnimationPoolData *)BLI_task_pool_userdata(pool);
-	double curtime = data->curtime;
+	//double curtime = data->curtime;
 
 	KX_GameObject *gameobj = (KX_GameObject *)taskdata;
 
@@ -1306,9 +1372,14 @@ static void update_anim_thread_func(TaskPool *pool, void *taskdata, int UNUSED(t
 		const std::vector<KX_GameObject *> children = gameobj->GetChildren();
 
 		bool has_mesh = false, has_non_mesh = false;
+		//bool getone = false; // used for only using 1st child, but the order is not the same every time...
 
 		// Check for meshes that haven't been culled
 		for (KX_GameObject *child : children) {
+			//if (getone) {
+			//	break;
+			//}
+			//getone = true;
 			if (!child->GetCullingNode().GetCulled()) {
 				needs_update = true;
 				break;
@@ -1331,7 +1402,7 @@ static void update_anim_thread_func(TaskPool *pool, void *taskdata, int UNUSED(t
 	}
 
 	// If the object is a culled armature, then we manage only the animation time and end of its animations.
-	gameobj->UpdateActionManager(curtime, needs_update);
+	gameobj->UpdateActionManager(data->curtime, needs_update);
 
 	if (needs_update) {
 		const std::vector<KX_GameObject *> children = gameobj->GetChildren();
@@ -1354,24 +1425,26 @@ static void update_anim_thread_func(TaskPool *pool, void *taskdata, int UNUSED(t
 void KX_Scene::UpdateAnimations(double curtime, bool restrict)
 {
 	if (restrict) {
-		const double animTimeStep = 1.0 / m_blenderScene->r.frs_sec;
+		m_animTimeStep = 1.0 / (m_blenderScene->r.frs_sec);
 
 		/* Don't update if the time step is too small and if we are not asking for redundant
 		 * updates like for different culling passes. */
-		if ((curtime - m_previousAnimTime) < animTimeStep && curtime != m_previousAnimTime) {
+		if ((curtime - m_animationPoolData.curtime) < m_animTimeStep && curtime != m_animationPoolData.curtime) {
 			return;
 		}
 
 		// Sanity/debug print to make sure we're actually going at the fps we want (should be close to animTimeStep)
-		// CM_Debug("Anim fps: " << 1.0 / (curtime - m_previousAnimTime));
-		m_previousAnimTime = curtime;
+		// CM_Debug("Anim fps: " << animTimeStep);
+		//m_animationPoolData.curtime = curtime;
 	}
 
 	m_animationPoolData.curtime = curtime;
 
 	for (KX_GameObject *gameobj : m_animatedlist) {
 		if (!gameobj->IsActionsSuspended()) {
-			BLI_task_pool_push(m_animationPool, update_anim_thread_func, gameobj, false, TASK_PRIORITY_LOW);
+			if (gameobj->GetDoAnimations()) {
+				BLI_task_pool_push(m_animationPool, update_anim_thread_func, gameobj, false, TASK_PRIORITY_LOW);
+			}
 		}
 	}
 
@@ -1392,9 +1465,9 @@ void KX_Scene::LogicEndFrame()
 	RemoveEuthanasyObjects();
 
 	//prepare obstacle simulation for new frame
-	if (m_obstacleSimulation) {
-		m_obstacleSimulation->UpdateObstacles();
-	}
+	//if (m_obstacleSimulation) {
+	//	m_obstacleSimulation->UpdateObstacles();
+	//}
 
 	for (KX_FontObject *font : m_fontlist) {
 		font->UpdateTextFromProperty();
@@ -1440,10 +1513,10 @@ void KX_Scene::RenderTextureRenderers(KX_TextureRendererManager::RendererCategor
 void KX_Scene::UpdateObjectLods(KX_Camera *cam, const std::vector<KX_GameObject *>& objects)
 {
 	const mt::vec3& cam_pos = cam->NodeGetWorldPosition();
-	const float lodfactor = cam->GetLodDistanceFactor();
+	m_lodfactor = cam->GetLodDistanceFactor();
 
 	for (KX_GameObject *gameobj : objects) {
-		gameobj->UpdateLod(this, cam_pos, lodfactor);
+		gameobj->UpdateLod(this, cam_pos, m_lodfactor);
 	}
 }
 
@@ -1469,10 +1542,6 @@ int KX_Scene::GetLodHysteresisValue() const
 
 void KX_Scene::UpdateObjectActivity()
 {
-	if (!m_activityCulling) {
-		return;
-	}
-
 	std::vector<mt::vec3, mt::simd_allocator<mt::vec3> > camPositions;
 
 	for (KX_Camera *cam : m_cameralist) {
@@ -1486,20 +1555,20 @@ void KX_Scene::UpdateObjectActivity()
 		return;
 	}
 
-	for (KX_GameObject *gameobj : m_objectlist) {
+	for (KX_GameObject *gameobj : m_cullinglist) {
 		// If the object doesn't manage activity culling we don't compute distance.
-		if (gameobj->GetActivityCullingInfo().m_flags == KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
-			continue;
-		}
+		//if (gameobj->GetActivityCullingInfo().m_flags == KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
+		//	continue;
+		//}
 
 		// For each camera compute the distance to objects and keep the minimum distance.
 		const mt::vec3& obpos = gameobj->NodeGetWorldPosition();
-		float dist = FLT_MAX;
+		m_dist = FLT_MAX;
 		for (const mt::vec3& campos : camPositions) {
 			// Keep the minimum distance.
-			dist = std::min((obpos - campos).LengthSquared(), dist);
+			m_dist = std::min((obpos - campos).LengthSquared(), m_dist);
 		}
-		gameobj->UpdateActivity(dist);
+		gameobj->UpdateActivity(m_dist);
 	}
 }
 
@@ -1714,6 +1783,9 @@ bool KX_Scene::MergeScene(KX_Scene *other)
 
 	m_fontlist->MergeList(other->GetFontList());
 	other->GetFontList()->ReleaseAndRemoveAll();
+
+	m_renderlist->MergeList(other->GetRenderList());
+	other->GetRenderList()->ReleaseAndRemoveAll();
 
 	// Grab any timer properties from the other scene.
 	SCA_TimeEventManager *timemgr_other = other->GetTimeEventManager();
@@ -1977,7 +2049,13 @@ PyObject *KX_Scene::pyattr_get_lights(EXP_PyObjectPlus *self_v, const EXP_PYATTR
 	KX_Scene *self = static_cast<KX_Scene *>(self_v);
 	return self->GetLightList()->GetProxy();
 }
-
+/*
+PyObject *KX_Scene::pyattr_get_out_side(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
+{
+	KX_Scene *self = static_cast<KX_Scene *>(self_v);
+	return self->GetOutSideList()->GetProxy();
+}
+*/
 PyObject *KX_Scene::pyattr_get_filter_manager(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
 {
 	KX_Scene *self = static_cast<KX_Scene *>(self_v);
@@ -2064,7 +2142,12 @@ int KX_Scene::pyattr_set_overrideCullingCamera(EXP_PyObjectPlus *self_v, const E
 static std::map<const std::string, KX_Scene::DrawingCallbackType> callbacksTable = {
 	{"pre_draw", KX_Scene::PRE_DRAW},
 	{"pre_draw_setup", KX_Scene::PRE_DRAW_SETUP},
-	{"post_draw", KX_Scene::POST_DRAW}
+	{"post_draw", KX_Scene::POST_DRAW},
+	{"thread_logic_1", KX_Scene::THREAD_LOGIC_1},
+	{"thread_logic_2", KX_Scene::THREAD_LOGIC_2},
+	{"thread_logic_3", KX_Scene::THREAD_LOGIC_3},
+	{"low_logic_1", KX_Scene::LOW_LOGIC_1},
+	{"high_logic_1", KX_Scene::HIGH_LOGIC_1}
 };
 
 PyObject *KX_Scene::pyattr_get_drawing_callback(EXP_PyObjectPlus *self_v, const EXP_PYATTRIBUTE_DEF *attrdef)
@@ -2163,11 +2246,16 @@ PyAttributeDef KX_Scene::Attributes[] = {
 	EXP_PYATTRIBUTE_RW_FUNCTION("overrideCullingCamera", KX_Scene, pyattr_get_overrideCullingCamera, pyattr_set_overrideCullingCamera),
 	EXP_PYATTRIBUTE_RW_FUNCTION("pre_draw", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
 	EXP_PYATTRIBUTE_RW_FUNCTION("post_draw", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
+	EXP_PYATTRIBUTE_RW_FUNCTION("thread_logic_1", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
+	EXP_PYATTRIBUTE_RW_FUNCTION("thread_logic_2", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
+	EXP_PYATTRIBUTE_RW_FUNCTION("thread_logic_3", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
+	EXP_PYATTRIBUTE_RW_FUNCTION("low_logic_1", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
+	EXP_PYATTRIBUTE_RW_FUNCTION("high_logic_1", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
 	EXP_PYATTRIBUTE_RW_FUNCTION("pre_draw_setup", KX_Scene, pyattr_get_drawing_callback, pyattr_set_drawing_callback),
 	EXP_PYATTRIBUTE_RW_FUNCTION("onRemove", KX_Scene, pyattr_get_remove_callback, pyattr_set_remove_callback),
 	EXP_PYATTRIBUTE_RW_FUNCTION("gravity", KX_Scene, pyattr_get_gravity, pyattr_set_gravity),
 	EXP_PYATTRIBUTE_BOOL_RO("suspended", KX_Scene, m_suspend),
-	EXP_PYATTRIBUTE_BOOL_RO("activityCulling", KX_Scene, m_activityCulling),
+	//EXP_PYATTRIBUTE_BOOL_RO("activityCulling", KX_Scene, m_activityCulling),
 	EXP_PYATTRIBUTE_BOOL_RO("dbvt_culling", KX_Scene, m_dbvtCulling),
 	EXP_PYATTRIBUTE_NULL // Sentinel
 };

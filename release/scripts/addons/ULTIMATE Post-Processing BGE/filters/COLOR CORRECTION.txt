@@ -1,0 +1,18 @@
+uniform sampler2D bgl_RenderedTexture;
+void main(void)
+{
+  float contrast = 1.4; //contrast adjustment
+  float r = 0.015;      //Red Channel adjustement
+  float g = 0.015 ;     //Green Channel adjustement
+  float b = 0.0;        //Blue Channel adjustement
+  float sat = 30.0;     //Saturation adjustement "0.0 = grey" "30.0 = default saturation"
+  float bright = 0.0;   //Brightness adjustement; negative values from 0.0 to -1.0 make the image darker, positve values from 0.0 to 1.0 brighter
+  
+    
+  vec4 texcolor = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+  vec3 a = vec3((texcolor.r+texcolor.g+texcolor.b)/3,(texcolor.r+texcolor.g+texcolor.b)/3,(texcolor.r+texcolor.g+texcolor.b)/3);
+  vec3 contrasted = vec3((texcolor.r - 0.5) * contrast +0.5,(texcolor.g - 0.5) * contrast +0.5,(texcolor.b - 0.5)* contrast + 0.5);
+  
+  gl_FragColor = vec4((contrasted[0]*sat + a[0])/(sat + 1)+r +bright,(contrasted[1]*sat + a[1])/(sat + 1)+g +bright,(contrasted[2]*sat + a[1])/(sat + 1)+b +bright, texcolor.a);
+  //gl_FragColor = vec4(contrasted[0],contrasted[1],contrasted[2], texcolor.a);
+}

@@ -23,6 +23,8 @@ private:
 	const SG_Frustum& m_frustum;
 	/// Layer to ignore some objects.
 	int m_layer;
+	unsigned int m_i;
+	unsigned int m_end;
 
 
 public:

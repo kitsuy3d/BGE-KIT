@@ -91,6 +91,20 @@ protected:
 	/// timestep subdivisions
 	int m_numTimeSubSteps;
 
+	struct CollisionPair {
+		CcdPhysicsController* ctrl1;
+		CcdPhysicsController* ctrl2;
+
+		bool operator<(const CollisionPair& other) const {
+			if (ctrl1 != other.ctrl1)
+				return ctrl1 < other.ctrl1;
+			return ctrl2 < other.ctrl2;
+		}
+	};
+
+	std::map<CollisionPair, int> m_callbackCounter;
+ 	//bool m_newFrame;
+
 	int m_ccdMode;
 	PHY_SolverType m_solverType;
 
@@ -99,7 +113,7 @@ protected:
 	float m_angularDeactivationThreshold;
 	float m_contactBreakingThreshold;
 
-	void ProcessFhSprings(double curTime, float timeStep);
+	void ProcessFhSprings(float timeStep);
 
 public:
 	CcdPhysicsEnvironment(PHY_SolverType solverType, bool useDbvtCulling);
@@ -114,7 +128,26 @@ public:
 
 	virtual void SetDebugDrawer(btIDebugDraw *debugDrawer);
 
-	virtual void SetNumIterations(int numIter);
+	virtual void SetNumIterations(int numIterations);
+
+	virtual void SetErp2(float erp);
+
+	virtual void SetErp(float erp2);
+
+	virtual void SetGlobalCfm(float globalCfm);
+
+	virtual void SetSplitImpulse(bool splitImpulse);
+
+	virtual void SetSplitImpulsePenetrationThreshold(float splitImpulsePenetrationThreshold);
+
+	virtual void SetSplitImpulseTurnErp(float splitImpulseTurnErp);
+
+	virtual void SetLinearSlop(float slop);
+
+	virtual void SetWarmstartingFactor(float factor);
+
+	virtual void SetMaxGyroscopicForce(float maxGyroscopicForce);
+
 	virtual void SetNumTimeSubSteps(int numTimeSubSteps)
 	{
 		m_numTimeSubSteps = numTimeSubSteps;
@@ -136,7 +169,8 @@ public:
 		return m_numTimeSubSteps;
 	}
 	/// Perform an integration step of duration 'timeStep'.
-	virtual bool ProceedDeltaTime(double curTime, float timeStep, float interval);
+	virtual void ProceedDeltaTime(float timeStep, float interval);
+	//virtual void ProceedDeltaTimeCar(float timeStep, float interval);
 
 	/**
 	 * Called by Bullet for every physical simulation (sub)tick.

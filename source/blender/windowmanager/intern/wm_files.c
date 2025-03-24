@@ -2043,7 +2043,7 @@ void WM_OT_recover_auto_save(wmOperatorType *ot)
 static void wm_filepath_default(char *filepath)
 {
 	if (G.save_over == false) {
-		BLI_ensure_filename(filepath, FILE_MAX, "untitled.range");
+		BLI_ensure_filename(filepath, FILE_MAX, "untitled.blend");
 	}
 }
 
@@ -2160,6 +2160,142 @@ static int wm_save_as_mainfile_exec(bContext *C, wmOperator *op)
 	return OPERATOR_FINISHED;
 }
 
+static int wm_save_as_mainfile_protected_invoke(bContext *C, wmOperator *op, const wmEvent *UNUSED(event))
+{
+
+	PropertyRNA *prop;
+
+	// Make sure the compress is true
+	prop = RNA_struct_find_property(op->ptr, "compress");
+	RNA_property_boolean_set(op->ptr, prop, true);
+
+	save_set_filepath(C, op);
+
+	WM_event_add_fileselect(C, op);
+
+	return OPERATOR_RUNNING_MODAL;
+}
+
+/* function only used in WM_OT_save_as_mainfile_protected */
+static int wm_save_as_mainfile_protected_exec(bContext *C, wmOperator *op)
+{
+	Main *bmain = CTX_data_main(C);
+	char path[FILE_MAX];
+	const bool is_save_as = (op->type->invoke == wm_save_as_mainfile_protected_invoke);
+
+	if (RNA_struct_property_is_set(op->ptr, "filepath")) {
+		RNA_string_get(op->ptr, "filepath", path);
+	}
+	else {
+		BLI_strncpy(path, BKE_main_blendfile_path(bmain), FILE_MAX);
+		wm_filepath_default(path);
+	}
+
+	const int fileflags_orig = G.fileflags;
+	int fileflags = G.fileflags & ~G_FILE_USERPREFS;
+
+	/* set compression flag */
+	SET_FLAG_FROM_TEST(
+	        fileflags, RNA_boolean_get(op->ptr, "compress"),
+	        G_FILE_COMPRESS);
+	SET_FLAG_FROM_TEST(
+	        fileflags, RNA_boolean_get(op->ptr, "relative_remap"),
+	        G_FILE_RELATIVE_REMAP);
+	SET_FLAG_FROM_TEST(
+	        fileflags,
+	        (RNA_struct_property_is_set(op->ptr, "copy") &&
+	         RNA_boolean_get(op->ptr, "copy")),
+	        G_FILE_SAVE_COPY);
+
+#ifdef USE_BMESH_SAVE_AS_COMPAT
+	SET_FLAG_FROM_TEST(
+	        fileflags,
+	        (RNA_struct_find_property(op->ptr, "use_mesh_compat") &&
+	         RNA_boolean_get(op->ptr, "use_mesh_compat")),
+	        G_FILE_MESH_COMPAT);
+#else
+#  error "don't remove by accident"
+#endif
+	fileflags |= G_FILE_SAVE_COPY_PROTECTED;
+
+	const bool ok = wm_file_write(C, path, fileflags, op->reports);
+
+	if ((op->flag & OP_IS_INVOKE) == 0) {
+		/* OP_IS_INVOKE is set when the operator is called from the GUI.
+		 * If it is not set, the operator is called from a script and
+		 * shouldn't influence G.fileflags. */
+		G.fileflags = fileflags_orig;
+	}
+
+	if (ok == false) {
+		return OPERATOR_CANCELLED;
+	}
+
+	WM_event_add_notifier(C, NC_WM | ND_FILESAVE, NULL);
+
+	if (!is_save_as && RNA_boolean_get(op->ptr, "exit")) {
+		wm_exit_schedule_delayed(C);
+	}
+
+	return OPERATOR_FINISHED;
+}
+
+static bool protected_save_check(bContext* UNUSED(C), wmOperator* op)
+{
+	char filepath[FILE_MAX];
+	RNA_string_get(op->ptr, "filepath", filepath);
+
+	/* first check if it has .blend extension, if it has change it to .blen */
+	if (BLI_path_extension_check(filepath, ".blend")) {
+		BLI_path_extension_replace(filepath, sizeof(filepath), ".blen");
+		RNA_string_set(op->ptr, "filepath", filepath);
+		return true;
+	}
+	else if (BLI_path_extension_check(filepath, ".range")) {
+		BLI_path_extension_replace(filepath, sizeof(filepath), ".blen");
+		RNA_string_set(op->ptr, "filepath", filepath);
+		return true;
+	}
+	else if (!BLI_path_extension_check(filepath, ".blen")) {
+		/* some users would prefer BLI_path_extension_replace(),
+		 * we keep getting nitpicking bug reports about this - campbell */
+		BLI_path_extension_ensure(filepath, FILE_MAX, ".blen");
+		RNA_string_set(op->ptr, "filepath", filepath);
+		return true;
+	}
+	return false;
+}
+
+void WM_OT_save_as_mainfile_protected(wmOperatorType* ot) {
+	PropertyRNA *prop;
+
+	ot->name = "Save As Protected File";
+	ot->idname = "WM_OT_save_as_mainfile_protected";
+	ot->description = "Save the protected file in the desired location";
+
+	ot->invoke = wm_save_as_mainfile_protected_invoke;
+	ot->exec = wm_save_as_mainfile_protected_exec;
+	ot->check = protected_save_check;
+	/* omit window poll so this can work in background mode */
+
+	WM_operator_properties_filesel(
+		ot, FILE_TYPE_FOLDER | FILE_TYPE_BLENDER, FILE_BLENDER, FILE_SAVE,
+		WM_FILESEL_FILEPATH, FILE_DEFAULTDISPLAY, FILE_SORT_ALPHA);
+	RNA_def_boolean(ot->srna, "compress", false,
+		"Compress (recommended)", "Write compressed protected file");
+	RNA_def_boolean(ot->srna, "relative_remap", true, "Remap Relative",
+		"Remap relative paths when saving in a different directory");
+	prop = RNA_def_boolean(ot->srna, "copy", false, "Save Copy",
+		"Save a copy of the actual working state but does not make saved file active");
+	RNA_def_property_flag(prop, PROP_SKIP_SAVE);
+
+#ifdef USE_BMESH_SAVE_AS_COMPAT
+	RNA_def_boolean(ot->srna, "use_mesh_compat", false, "Legacy Mesh Format",
+		"Save using legacy mesh format (no ngons) - WARNING: only saves tris and quads, other ngons will "
+		"be lost (no implicit triangulation)");
+#endif
+}
+
 /* function used for WM_OT_save_mainfile too */
 static bool blend_save_check(bContext *UNUSED(C), wmOperator *op)
 {
@@ -2168,7 +2304,7 @@ static bool blend_save_check(bContext *UNUSED(C), wmOperator *op)
 	if (!BLO_has_bfile_extension(filepath)) {
 		/* some users would prefer BLI_path_extension_replace(),
 		 * we keep getting nitpicking bug reports about this - campbell */
-		BLI_path_extension_ensure(filepath, FILE_MAX, ".range");
+		BLI_path_extension_ensure(filepath, FILE_MAX, ".blend");
 		RNA_string_set(op->ptr, "filepath", filepath);
 		return true;
 	}
@@ -2179,7 +2315,7 @@ void WM_OT_save_as_mainfile(wmOperatorType *ot)
 {
 	PropertyRNA *prop;
 
-	ot->name = "Save As RanGE File";
+	ot->name = "Save As File";
 	ot->idname = "WM_OT_save_as_mainfile";
 	ot->description = "Save the current file in the desired location";
 
@@ -2191,7 +2327,7 @@ void WM_OT_save_as_mainfile(wmOperatorType *ot)
 	WM_operator_properties_filesel(
 	        ot, FILE_TYPE_FOLDER | FILE_TYPE_BLENDER, FILE_BLENDER, FILE_SAVE,
 	        WM_FILESEL_FILEPATH, FILE_DEFAULTDISPLAY, FILE_SORT_ALPHA);
-	RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .range file");
+	RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed file");
 	RNA_def_boolean(ot->srna, "relative_remap", true, "Remap Relative",
 	                "Remap relative paths when saving in a different directory");
 	prop = RNA_def_boolean(ot->srna, "copy", false, "Save Copy",
@@ -2247,9 +2383,9 @@ static int wm_save_mainfile_invoke(bContext *C, wmOperator *op, const wmEvent *U
 
 void WM_OT_save_mainfile(wmOperatorType *ot)
 {
-	ot->name = "Save RanGE File";
+	ot->name = "Save File";
 	ot->idname = "WM_OT_save_mainfile";
-	ot->description = "Save the current RanGE file";
+	ot->description = "Save the current file";
 
 	ot->invoke = wm_save_mainfile_invoke;
 	ot->exec = wm_save_as_mainfile_exec;
@@ -2260,11 +2396,11 @@ void WM_OT_save_mainfile(wmOperatorType *ot)
 	WM_operator_properties_filesel(
 	        ot, FILE_TYPE_FOLDER | FILE_TYPE_BLENDER, FILE_BLENDER, FILE_SAVE,
 	        WM_FILESEL_FILEPATH, FILE_DEFAULTDISPLAY, FILE_SORT_ALPHA);
-	RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed .range file");
+	RNA_def_boolean(ot->srna, "compress", false, "Compress", "Write compressed file");
 	RNA_def_boolean(ot->srna, "relative_remap", false, "Remap Relative",
 	                "Remap relative paths when saving in a different directory");
 
-	prop = RNA_def_boolean(ot->srna, "exit", false, "Exit", "Exit RanGE after saving");
+	prop = RNA_def_boolean(ot->srna, "exit", false, "Exit", "Exit after saving");
 	RNA_def_property_flag(prop, PROP_HIDDEN | PROP_SKIP_SAVE);
 }
 

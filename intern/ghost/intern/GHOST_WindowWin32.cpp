@@ -722,7 +722,7 @@ GHOST_Context *GHOST_WindowWin32::newDrawingContext(GHOST_TDrawingContextType ty
 		        2, 1, // GL version requested
 #else
 		        // switch to this for Blender 2.8 development
-		        EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
+		        EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT
 		        3, 2,
 #endif
 		        GHOST_OPENGL_EGL_CONTEXT_FLAGS,

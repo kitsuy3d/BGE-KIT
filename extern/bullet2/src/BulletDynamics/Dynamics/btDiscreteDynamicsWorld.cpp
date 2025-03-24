@@ -397,7 +397,6 @@ void	btDiscreteDynamicsWorld::synchronizeMotionStates()
 	}
 }
 
-
 int	btDiscreteDynamicsWorld::stepSimulation( btScalar timeStep,int maxSubSteps, btScalar fixedTimeStep)
 {
 	startProfiling(timeStep);
@@ -449,26 +448,33 @@ int	btDiscreteDynamicsWorld::stepSimulation( btScalar timeStep,int maxSubSteps, 
 
 		applyGravity();
 
+		numSimulationSubSteps = clampedSimulationSteps;
 
 
-		for (int i=0;i<clampedSimulationSteps;i++)
-		{
-			internalSingleStepSimulation(fixedTimeStep);
-			synchronizeMotionStates();
-		}
 
-	} else
-	{
-		synchronizeMotionStates();
+		//for (int i=0;i<clampedSimulationSteps;i++)
+		//{
+		//	internalSingleStepSimulation(fixedTimeStep);
+			//synchronizeMotionStates();
+		//}
+
+	//}// else {
+		//synchronizeMotionStates();
 	}
+	//synchronizeMotionStates();
 
-	clearForces();
+	//clearForces();
 
 #ifndef BT_NO_PROFILE
 	CProfileManager::Increment_Frame_Counter();
 #endif //BT_NO_PROFILE
 
 	return numSimulationSubSteps;
+}
+
+void	btDiscreteDynamicsWorld::stepSimulationRun()
+{
+	internalSingleStepSimulation(m_fixedTimeStep);
 }
 
 void	btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
@@ -489,7 +495,7 @@ void	btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
 	dispatchInfo.m_stepCount = 0;
 	dispatchInfo.m_debugDraw = getDebugDrawer();
 
-
+	// do we even need this?
     createPredictiveContacts(timeStep);
 
 	///perform collision detection
@@ -504,7 +510,6 @@ void	btDiscreteDynamicsWorld::internalSingleStepSimulation(btScalar timeStep)
 
 	///solve contact and other joint constraints
 	solveConstraints(getSolverInfo());
-
 	///CallbackTriggers();
 
 	///integrate transforms
@@ -1134,7 +1139,7 @@ void	btDiscreteDynamicsWorld::predictUnconstraintMotion(btScalar timeStep)
 
 			body->applyDamping(timeStep);
 
-			body->predictIntegratedTransform(timeStep,body->getInterpolationWorldTransform());
+			//body->predictIntegratedTransform(timeStep,body->getInterpolationWorldTransform());
 		}
 	}
 }

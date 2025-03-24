@@ -1,0 +1,38 @@
+// Glitch Transition Shader for BGE
+uniform sampler2D bgl_RenderedTexture;       // Input texture
+uniform float timer;                         // Time for animation
+uniform float shake_power = 0.03;            // Shake intensity
+uniform float shake_block_size = 30.5;       // Block size for shaking
+uniform float fade_glitch;                   // Fade amount (0.0 to 1.0)
+uniform vec2 direction_r = vec2(1.0, 0.0);   // R direction
+uniform vec2 direction_g = vec2(0.4, 1.0);   // G direction
+uniform vec2 direction_b = vec2(-0.7, -0.3); // B direction
+uniform float bgl_RenderedTextureWidth;      // Width of the rendered texture
+uniform float bgl_RenderedTextureHeight;     // Height of the rendered texture
+
+// Function to generate pseudo-random values
+float random(float seed) {
+    return fract(543.2543 * sin(dot(vec2(seed, seed), vec2(3525.46, -54.3415))));
+}
+
+void main() {
+    // Normalize coordinates based on texture size
+    vec2 fixed_uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight); 
+
+    // Calculate the UV offset based on shake and block size
+    fixed_uv.x += (random(trunc(fixed_uv.y * shake_block_size) / shake_block_size + timer) - 0.5) * shake_power * (fade_glitch * 12.0);
+
+    // Sample colors from the texture with the direction offsets
+    vec4 color = vec4(
+        texture(bgl_RenderedTexture, fixed_uv + normalize(direction_r) * fade_glitch).r,
+        texture(bgl_RenderedTexture, fixed_uv + normalize(direction_g) * fade_glitch).g,
+        texture(bgl_RenderedTexture, fixed_uv + normalize(direction_b) * fade_glitch).b,
+        0.0
+    ) * (1.0 - fade_glitch);
+
+    // Set the alpha to 1.0
+    color.a = 1.0;
+
+    // Output the final color
+    gl_FragColor = color;
+}

@@ -44,7 +44,7 @@ m_convexA(convexA),m_convexB1(0),m_planeShape(plane)
 
 /// This maximum should not be necessary. It allows for untested/degenerate cases in production code.
 /// You don't want your game ever to lock-up.
-#define MAX_ITERATIONS 64
+#define MAX_ITERATIONS 256 // was 64
 
 void btContinuousConvexCollision::computeClosestPoints( const btTransform& transA, const btTransform& transB,btPointCollector& pointCollector)
 {
@@ -132,7 +132,7 @@ bool	btContinuousConvexCollision::calcTimeOfImpact(
 	//first solution, using GJK
 
 
-	btScalar radius = 0.001f;
+	btScalar radius = 0.00000000000001f;
 //	result.drawCoordSystem(sphereTr);
 
 	btPointCollector	pointCollector1;

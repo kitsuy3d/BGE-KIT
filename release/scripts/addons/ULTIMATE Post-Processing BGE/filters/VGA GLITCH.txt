@@ -1,0 +1,36 @@
+uniform sampler2D bgl_RenderedTexture;         // Input texture
+uniform float timer;                           // Time for animation
+uniform float glitchIntensity = 0.05;          // Intensity of the glitch effect
+uniform float maxOffset = 0.02;                // Maximum pixel offset for glitching
+uniform float noiseScale = 20.0;               // Scale of the noise effect
+
+// Render texture dimensions
+uniform float bgl_RenderedTextureWidth;        // Width of the rendered texture
+uniform float bgl_RenderedTextureHeight;       // Height of the rendered texture
+
+// Simplex noise function for adding randomness (you can replace it with your own noise function)
+float noise(vec2 uv) {
+    return fract(sin(dot(uv.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+void main()
+{
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight); // Use provided width and height
+
+    // Add noise-based offsets for glitch effect
+    vec2 offset = vec2(noise(uv * noiseScale + timer) * maxOffset, 0.0);
+    
+    // Create new UVs for the glitch effect
+    vec2 glitchUV1 = uv + offset; // Randomly shift texture
+    vec2 glitchUV2 = uv + vec2(0.0, offset.x * glitchIntensity); // Vertical shift for variation
+
+    // Sample colors from the texture
+    vec4 color1 = texture2D(bgl_RenderedTexture, glitchUV1);
+    vec4 color2 = texture2D(bgl_RenderedTexture, glitchUV2);
+
+    // Combine sampled colors to create glitch effect
+    vec4 finalColor = mix(color1, color2, 0.5); // Blend between two samples
+
+    // Output the final color
+    gl_FragColor = finalColor;
+}

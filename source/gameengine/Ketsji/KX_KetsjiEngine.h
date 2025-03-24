@@ -41,6 +41,7 @@
 #include "RAS_ICanvas.h"
 #include "RAS_DebugDraw.h"
 #include "SCA_IInputDevice.h" // For SCA_IInputDevice::SCA_EnumInputs.
+#include "SCA_PythonMouse.h"
 #include "CM_Clock.h"
 #include <vector>
 
@@ -114,14 +115,18 @@ public:
 		/// Automatic add debug properties to the debug list.
 		AUTO_ADD_DEBUG_PROPERTIES = (1 << 7),
 		/// Use override camera?
-		CAMERA_OVERRIDE = (1 << 8)
+		CAMERA_OVERRIDE = (1 << 8),
+		/// Show game debug interface?
+		SHOW_DEBUG_MODE = (1 << 9)
 	};
 
 private:
 	struct CameraRenderData
 	{
-		CameraRenderData(KX_Camera *rendercam, KX_Camera *cullingcam, const RAS_Rect& area, const RAS_Rect& viewport,
-				RAS_Rasterizer::StereoMode stereoMode, RAS_Rasterizer::StereoEye eye);
+		CameraRenderData(KX_Camera *rendercam,
+						 KX_Camera *cullingcam,
+						 const RAS_Rect& area, const RAS_Rect& viewport,
+						 RAS_Rasterizer::StereoMode stereoMode, RAS_Rasterizer::StereoEye eye);
 		CameraRenderData(const CameraRenderData& other);
 		~CameraRenderData();
 
@@ -160,7 +165,6 @@ private:
 		std::vector<FrameRenderData> m_frameDataList;
 	};
 
-	CM_Clock m_clock;
 	/// 2D Canvas (2D Rendering Device Context)
 	RAS_ICanvas *m_canvas;
 	/// 3D Rasterizer (3D Rendering)
@@ -169,11 +173,24 @@ private:
 	RAS_DebugDraw m_debugDraw;
 	BL_Converter *m_converter;
 	KX_NetworkMessageManager *m_networkMessageManager;
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	PyObject *m_pyprofiledict;
-#endif
+//#endif
 	SCA_IInputDevice *m_inputDevice;
+	SCA_PythonMouse *m_pythonMouse;
 
+	/*struct FrameTimes
+	{
+		// Number of frames to proceed.
+		int frames;
+		// Real duration of a frame.
+		double timestep;
+		// Scaled duration of a frame.
+		double framestep;
+	};*/
+
+	CM_Clock m_clock;
+	
 	/// Lists of scenes scheduled to be removed at the end of the frame.
 	std::vector<std::string> m_removingScenes;
 	/// Lists of overley scenes scheduled to be added at the end of the frame.
@@ -188,25 +205,77 @@ private:
 
 	bool m_bInitialized;
 
+	bool m_isfirstscene;
+	unsigned short m_i;
+	unsigned short m_size;
+	bool m_islastscene;
+
 	FlagType m_flags;
 
 	/// current logic game time
 	double m_frameTime;
+	double m_logicTime;
+	double m_physicsTime;
+	double m_animationsTime;
+	//unsigned int m_width;
+	//unsigned int m_height;
+	//unsigned int m_left;
+	//unsigned int m_bottom;
+	//unsigned int m_i;
+	short m_addrem;
+	// Real duration of a frame.
+	double m_timestep;
+	unsigned int m_sleeptime;
+	double m_overframetime;
+	double m_lastframetime;
+	double m_logictimestart;
+	double m_logictime;
+	double m_lastlogictime;
+	double m_tottime;
+	double m_time;
+	double m_rendertime;
+	double m_lastrendertime;
+	double m_rendertimeaverage;
+	double m_rendertimestart;
+	double m_overrendertime;
+	double m_animationtime;
+	double m_lastanimationtime;
+	double m_animationtimeaverage;
+	double m_animationtimestart;
+	double m_overanimationtime;
+	// Scaled duration of a frame.
+	double m_framestep;
+
 	/// game time for the next rendering step
 	double m_clockTime;
 	/// time scaling parameter. if > 1.0, time goes faster than real-time. If < 1.0, times goes slower than real-time.
-	double m_timescale;
+	double m_timeScale;
+	double m_logicScale;
+	double m_physicsScale;
+	double m_animationsScale;
 	double m_previousRealTime;
 
 	/// maximum number of consecutive logic frame
-	int m_maxLogicFrame;
+	double m_maxLogicFrame;
 	/// maximum number of consecutive physics frame
-	int m_maxPhysicsFrame;
+	bool m_maxPhysicsFrame;
 	double m_ticrate;
+	double m_renderrate;
+	double m_animationrate;
+	/// DeltaTime
+	double m_deltaTime;
+	double m_previous_deltaTime;
 	/// for animation playback only - ipo and action
 	double m_anim_framerate;
+	bool m_needsRender;
+	bool m_needsAnimation;
 
 	bool m_doRender;  /* whether or not the scene should be rendered after the logic frame */
+
+	//bool m_doRendering;  /* whether or not the scene should be rendered after the logic frame 2 */
+	/// current timer time
+	//double m_timedFrame;
+
 
 	/// Key used to exit the BGE
 	SCA_IInputDevice::SCA_EnumInputs m_exitKey;
@@ -218,28 +287,7 @@ private:
 	mt::mat3 m_overrideCamOrientation;
 	mt::vec3 m_overrideCamPosition;
 
-	/// Categories for profiling display.
-	typedef enum {
-		tc_first = 0,
-		tc_physics = 0,
-		tc_logic,
-		tc_animations,
-		tc_network,
-		tc_scenegraph,
-		tc_rasterizer,
-		tc_services, // time spent in miscelaneous activities
-		tc_overhead, // profile info drawing overhead
-		tc_outside, // time spent outside main loop
-		tc_latency, // time spent waiting on the gpu
-		tc_numCategories
-	} KX_TimeCategory;
-
-	/// Time logger.
-	KX_TimeCategoryLogger m_logger;
-	/// Labels for profiling display.
-	static const std::string m_profileLabels[tc_numCategories];
-
-	enum QueryCategory {
+	/*enum QueryCategory {
 		QUERY_SAMPLES = 0,
 		QUERY_PRIMITIVES,
 		QUERY_TIME,
@@ -248,7 +296,7 @@ private:
 
 	std::vector<RAS_Query> m_renderQueries;
 	static const std::string m_renderQueriesLabels[QUERY_MAX];
-
+*/
 	/// Last estimated framerate
 	double m_average_framerate;
 
@@ -277,19 +325,19 @@ private:
 	 * but it will cause some negative current frame on actions because of the
 	 * total pause duration not set.
 	 */
-	void UpdateSuspendedScenes(double framestep);
 
 	/// Update and return the projection matrix of a camera depending on the viewport.
 	mt::mat4 GetCameraProjectionMatrix(KX_Scene *scene, KX_Camera *cam, RAS_Rasterizer::StereoMode stereoMode,
 			RAS_Rasterizer::StereoEye eye, const RAS_Rect& viewport, const RAS_Rect& area) const;
-	CameraRenderData GetCameraRenderData(KX_Scene *scene, KX_Camera *camera, KX_Camera *overrideCullingCam, const RAS_Rect& displayArea,
+	CameraRenderData GetCameraRenderData(KX_Scene *scene, KX_Camera *camera, const RAS_Rect& displayArea,
 			RAS_Rasterizer::StereoMode stereoMode, RAS_Rasterizer::StereoEye eye);
 	/// Compute frame render data per eyes (in case of stereo), scenes and camera.
 	RenderData GetRenderData();
 
-	void RenderCamera(KX_Scene *scene, const CameraRenderData& cameraFrameData, RAS_OffScreen *offScreen, unsigned short pass, bool isFirstScene);
+	void RenderCamera(KX_Scene *scene, const CameraRenderData& cameraFrameData, RAS_OffScreen *offScreen);
 	RAS_OffScreen *PostRenderScene(KX_Scene *scene, RAS_OffScreen *inputofs, RAS_OffScreen *targetofs);
-	void RenderDebugProperties();
+
+	void RenderDebugProperties(void);
 	/// Debug draw cameras frustum of a scene.
 	void DrawDebugCameraFrustum(KX_Scene *scene, const CameraRenderData& cameraFrameData);
 	/// Debug draw lights shadow frustum of a scene.
@@ -301,7 +349,7 @@ private:
 	 * SceneListsChanged(void) is called.
 	 * \see SceneListsChanged(void).
 	 */
-	void ProcessScheduledScenes(void);
+	void ProcessScheduledScenes();
 
 	/**
 	 * This method is invoked when the scene lists have changed.
@@ -309,8 +357,49 @@ private:
 	void RemoveScheduledScenes(void);
 	void AddScheduledScenes(void);
 	void ReplaceScheduledScenes(void);
-	void PostProcessScene(KX_Scene *scene);
 
+	void PostProcessScene(KX_Scene* scene);
+	void ReleaseMoveEvent();
+	void ClearInputs();
+
+	void UpdateObjectActivity(KX_Scene *scene);
+	void LogicBeginFrame(KX_Scene *scene);
+	void LogicUpdateFrame(KX_Scene *scene);
+	void LogicEndFrame(KX_Scene *scene);
+	void UpdatePhysics(KX_Scene *scene);
+	void UpdateParents(KX_Scene *scene);
+	void SetAuxilaryClientInfo(KX_Scene *scene);
+	void ProcessScheduledLibraries();
+	void ClockTiming();
+	void FrameOver();
+	void LogAverage();
+	void FrameTiming();
+	void Thread_Logic_1(KX_Scene *scene);
+	void Thread_Logic_2(KX_Scene *scene);
+	void Thread_Logic_3(KX_Scene *scene);
+	void Low_Logic_1(KX_Scene *scene);
+	void High_Logic_1(KX_Scene *scene);
+	//void CanvasSize();
+	void FirstScene();
+	void GetWorldInfoUpdateWorldSettings(KX_Scene *scene);
+	void ClearMessages();
+	void RenderTextureRenderers(KX_Scene *scene);
+	void FlushDebugDraw(KX_Scene *scene);
+	void MotionBlur();
+	void SwapBuffers();
+	void BeginFrameRun();
+	void BeginDraw();
+	void EndFrameRun();
+	void FlushScreenshots();
+	void EndDrawRun();
+	void SetSwapControl();
+
+
+public:
+	/// It is necessary to make the function public so that the debug mode can use it
+	void CreateTemporaryCamera(KX_Scene *scene, bool override_camera);
+
+private:
 	void BeginFrame();
 	void EndFrame();
 
@@ -318,14 +407,37 @@ public:
 	KX_KetsjiEngine();
 	virtual ~KX_KetsjiEngine();
 
+	/// Categories for profiling display.
+	typedef enum {
+		tc_first = 0,
+		tc_physics = 0,
+		tc_logic,
+		tc_rasterizer,
+		tc_overhead, // profile info drawing overhead
+		tc_animations,
+		tc_network,
+		tc_scenegraph,
+		tc_latency, // time spent waiting on the gpu
+		tc_services, // time spent in miscelaneous activities
+		tc_outside, // time spent outside main loop
+		tc_numCategories
+	} KX_TimeCategory;
+
+	/// Time logger.
+	KX_TimeCategoryLogger m_logger;
+
+	/// Labels for profiling display.
+	static const std::string m_profileLabels[tc_numCategories];
+
 	/// set the devices and stuff. the client must take care of creating these
 	void SetInputDevice(SCA_IInputDevice *inputDevice);
+	void SetPythonMouse(SCA_PythonMouse *pythonMouse);
 	void SetCanvas(RAS_ICanvas *canvas);
 	void SetRasterizer(RAS_Rasterizer *rasterizer);
 	void SetNetworkMessageManager(KX_NetworkMessageManager *manager);
-#ifdef WITH_PYTHON
+//#ifdef WITH_PYTHON
 	PyObject *GetPyProfileDict();
-#endif
+//#endif
 	void SetConverter(BL_Converter *converter);
 	BL_Converter *GetConverter()
 	{
@@ -340,9 +452,21 @@ public:
 	{
 		return m_canvas;
 	}
+	EXP_ListValue<KX_Scene> *GetScenes()
+	{
+		return m_scenes;
+	}
+	FlagType GetFlags()
+	{
+		return m_flags;
+	}
 	SCA_IInputDevice *GetInputDevice()
 	{
 		return m_inputDevice;
+	}
+	SCA_PythonMouse *GetPythonMouse()
+	{
+		return m_pythonMouse;
 	}
 	KX_NetworkMessageManager *GetNetworkMessageManager() const
 	{
@@ -421,6 +545,22 @@ public:
 	 */
 	void SetTicRate(double ticrate);
 	/**
+	 * Gets the number of render updates per second.
+	 */
+	double GetRenderRate();
+	/**
+	 * Sets the number of render updates per second.
+	 */
+	void SetRenderRate(double renderrate);
+	/**
+	 * Gets the number of render updates per second.
+	 */
+	double GetAnimationRate();
+	/**
+	 * Sets the number of render updates per second.
+	 */
+	void SetAnimationRate(double animationrate);
+	/**
 	 * Gets the maximum number of logic frame before render frame
 	 */
 	int GetMaxLogicFrame();
@@ -431,11 +571,15 @@ public:
 	/**
 	 * Gets the maximum number of physics frame before render frame
 	 */
-	int GetMaxPhysicsFrame();
+	bool GetMaxPhysicsFrame();
 	/**
 	 * Sets the maximum number of physics frame before render frame
 	 */
-	void SetMaxPhysicsFrame(int frame);
+	void SetMaxPhysicsFrame(bool frame);
+	/**
+	 * Gets deltatime from engine calculation
+	 */
+	double GetEngineDeltaTime();
 
 	/**
 	 * Gets the framerate for playing animations. (actions and ipos)
@@ -451,6 +595,11 @@ public:
 	 */
 	double GetAverageFrameRate();
 
+
+	/**
+	 * Gets the last estimated average Render rate
+	 */
+	double GetAverageRenderRate();
 	/**
 	 * Gets the time scale multiplier
 	 */
@@ -460,6 +609,33 @@ public:
 	 * Sets the time scale multiplier
 	 */
 	void SetTimeScale(double timeScale);
+	/**
+	 * Gets the time scale multiplier
+	 */
+	double GetLogicScale() const;
+
+	/**
+	 * Sets the time scale multiplier
+	 */
+	void SetLogicScale(double logicScale);
+	/**
+	 * Gets the time scale multiplier
+	 */
+	double GetPhysicsScale() const;
+
+	/**
+	 * Sets the time scale multiplier
+	 */
+	void SetPhysicsScale(double physicsScale);
+	/**
+	 * Gets the time scale multiplier
+	 */
+	double GetAnimationsScale() const;
+
+	/**
+	 * Sets the time scale multiplier
+	 */
+	void SetAnimationsScale(double animationsScale);
 
 	void SetExitKey(SCA_IInputDevice::SCA_EnumInputs key);
 	SCA_IInputDevice::SCA_EnumInputs GetExitKey() const;
@@ -473,6 +649,9 @@ public:
 	 * Get the current render flag value
 	 */
 	bool GetRender();
+
+	//bool GetDoLod();
+
 
 	/// Allow debug bounding box debug.
 	void SetShowBoundingBox(KX_DebugOption mode);

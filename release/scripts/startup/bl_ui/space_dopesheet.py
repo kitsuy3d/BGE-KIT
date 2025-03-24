@@ -122,6 +122,23 @@ class DOPESHEET_HT_header(Header):
         row.template_header()
         DOPESHEET_MT_editor_menus.draw_collapsible(context, layout)
 
+        row = layout.row(align=True)
+        if not scene.use_preview_range:
+            row.prop(scene, "frame_start", text="")
+            row.prop(scene, "frame_end", text="")
+        else:
+            row.prop(scene, "frame_preview_start", text="")
+            row.prop(scene, "frame_preview_end", text="")
+            
+        if scene.show_subframe:
+            layout.prop(scene, "frame_float", text="")
+        else:
+            layout.prop(scene, "frame_current", text="")
+
+        gs = context.scene.game_settings
+
+        layout.prop(context.scene.render, "fps", text="")
+
         layout.prop(st, "mode", text="")
 
         if st.mode in {'ACTION', 'SHAPEKEY'}:
@@ -174,19 +191,6 @@ class DOPESHEET_HT_header(Header):
         row.operator("action.paste", text="", icon='PASTEDOWN')
         if st.mode not in ('GPENCIL', 'MASK'):
             row.operator("action.paste", text="", icon='PASTEFLIPDOWN').flipped = True
-
-        row = layout.row(align=True)
-        if not scene.use_preview_range:
-            row.prop(scene, "frame_start", text="Start")
-            row.prop(scene, "frame_end", text="End")
-        else:
-            row.prop(scene, "frame_preview_start", text="Start")
-            row.prop(scene, "frame_preview_end", text="End")
-            
-        if scene.show_subframe:
-            layout.prop(scene, "frame_float", text="")
-        else:
-            layout.prop(scene, "frame_current", text="Frame")
                
         row = layout.row(align=True)
         row.operator("screen.frame_jump", text="", icon='REW').end = False

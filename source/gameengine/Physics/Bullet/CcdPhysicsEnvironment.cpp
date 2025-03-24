@@ -394,8 +394,9 @@ CcdPhysicsEnvironment::CcdPhysicsEnvironment(PHY_SolverType solverType, bool use
 	:m_debugDrawer(nullptr),
 	m_cullingCache(nullptr),
 	m_cullingTree(nullptr),
-	m_numIterations(10),
-	m_numTimeSubSteps(1),
+	//m_numIterations(10),
+	m_numTimeSubSteps(10),
+	//m_newFrame(true),
 	m_ccdMode(0),
 	m_solverType(PHY_SOLVER_NONE),
 	m_deactivationTime(2.0f),
@@ -730,7 +731,52 @@ void CcdPhysicsEnvironment::SimulationSubtickCallback(btScalar timeStep)
 	}
 }
 
-bool CcdPhysicsEnvironment::ProceedDeltaTime(double curTime, float timeStep, float interval)
+void CcdPhysicsEnvironment::ProceedDeltaTime(float timeStep, float interval)
+{
+	//std::set<CcdPhysicsController *>::iterator it;
+	m_callbackCounter.clear();
+	//m_newFrame = true;
+	int i;
+
+	// Update Bullet global variables.
+	//gDeactivationTime = m_deactivationTime;
+	//gContactBreakingThreshold = m_contactBreakingThreshold;
+
+	//for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
+	//	(*it)->SynchronizeMotionStates(timeStep);
+	//}
+	for (i = 0; i < m_wrapperVehicles.size(); i++) {
+		WrapperVehicle *veh = m_wrapperVehicles[i];
+		veh->SyncWheels();
+	}
+	float subStep = timeStep / float(m_numTimeSubSteps);
+	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);
+	//if (i) {
+	//	CallbackTriggers();
+	//}
+	for (int r=0;r<i;r++) {
+		m_dynamicsWorld->stepSimulationRun();
+		CallbackTriggers();
+	}
+	m_dynamicsWorld->synchronizeMotionStates();
+	m_dynamicsWorld->clearForces();
+	if (i < 1) {
+		return;
+	}
+	ProcessFhSprings(subStep * i);
+
+
+	//for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
+	//	(*it)->SynchronizeMotionStates(timeStep);
+	//}
+
+	//for (i = 0; i < m_wrapperVehicles.size(); i++) {
+	//	WrapperVehicle *veh = m_wrapperVehicles[i];
+	//	veh->SyncWheels();
+	//}
+}
+
+/*void CcdPhysicsEnvironment::ProceedDeltaTimeCar(float timeStep, float interval)
 {
 	std::set<CcdPhysicsController *>::iterator it;
 	int i;
@@ -744,11 +790,9 @@ bool CcdPhysicsEnvironment::ProceedDeltaTime(double curTime, float timeStep, flo
 	}
 
 	float subStep = timeStep / float(m_numTimeSubSteps);
-	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);//perform always a full simulation step
-//uncomment next line to see where Bullet spend its time (printf in console)
-//CProfileManager::dumpAll();
+	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);
 
-	ProcessFhSprings(curTime, i * subStep);
+	ProcessFhSprings(subStep * i);
 
 	for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
 		(*it)->SynchronizeMotionStates(timeStep);
@@ -760,10 +804,8 @@ bool CcdPhysicsEnvironment::ProceedDeltaTime(double curTime, float timeStep, flo
 	}
 
 	CallbackTriggers();
-
-	return true;
 }
-
+*/
 class ClosestRayResultCallbackNotMe : public btCollisionWorld::ClosestRayResultCallback
 {
 	btCollisionObject *m_owner;
@@ -792,7 +834,7 @@ public:
 	}
 };
 
-void CcdPhysicsEnvironment::ProcessFhSprings(double curTime, float interval)
+void CcdPhysicsEnvironment::ProcessFhSprings(float interval)
 {
 	std::set<CcdPhysicsController *>::iterator it;
 
@@ -861,7 +903,7 @@ void CcdPhysicsEnvironment::ProcessFhSprings(double curTime, float interval)
 						btScalar spring_extent = 1.0f - distance / hitObjShapeProps.m_fh_distance;
 
 						btScalar i_spring = spring_extent * hitObjShapeProps.m_fh_spring;
-						btScalar i_damp =   rel_vel_ray * hitObjShapeProps.m_fh_damping;
+						btScalar i_damp = rel_vel_ray * hitObjShapeProps.m_fh_damping;
 
 						cl_object->setLinearVelocity(cl_object->getLinearVelocity() + (-(i_spring + i_damp) * ray_dir) * step);
 						if (hitObjShapeProps.m_fh_normal) {
@@ -931,13 +973,58 @@ void CcdPhysicsEnvironment::SetDebugMode(int debugMode)
 	}
 }
 
-void CcdPhysicsEnvironment::SetNumIterations(int numIter)
+void CcdPhysicsEnvironment::SetNumIterations(int numIterations)
 {
-	m_numIterations = numIter;
+	m_dynamicsWorld->getSolverInfo().m_numIterations = numIterations;
 }
+
+void CcdPhysicsEnvironment::SetErp(float erp)
+{
+	m_dynamicsWorld->getSolverInfo().m_erp = erp;
+}
+
+void CcdPhysicsEnvironment::SetErp2(float erp2)
+{
+	m_dynamicsWorld->getSolverInfo().m_erp2 = erp2;
+}
+
+void CcdPhysicsEnvironment::SetGlobalCfm(float globalCfm)
+{
+	m_dynamicsWorld->getSolverInfo().m_globalCfm = globalCfm;
+}
+
+void CcdPhysicsEnvironment::SetSplitImpulse(bool splitImpulse)
+{
+	m_dynamicsWorld->getSolverInfo().m_splitImpulse = splitImpulse;
+}
+
+void CcdPhysicsEnvironment::SetSplitImpulsePenetrationThreshold(float splitImpulsePenetrationThreshold)
+{
+	m_dynamicsWorld->getSolverInfo().m_splitImpulsePenetrationThreshold = splitImpulsePenetrationThreshold;
+}
+void CcdPhysicsEnvironment::SetSplitImpulseTurnErp(float splitImpulseTurnErp)
+{
+	m_dynamicsWorld->getSolverInfo().m_splitImpulseTurnErp = splitImpulseTurnErp;
+}
+void CcdPhysicsEnvironment::SetLinearSlop(float slop)
+{
+	m_dynamicsWorld->getSolverInfo().m_linearSlop = slop;
+}
+
+void CcdPhysicsEnvironment::SetWarmstartingFactor(float factor)
+{
+	m_dynamicsWorld->getSolverInfo().m_warmstartingFactor = factor;
+}
+
+void CcdPhysicsEnvironment::SetMaxGyroscopicForce(float maxGyroscopicForce)
+{
+	m_dynamicsWorld->getSolverInfo().m_maxGyroscopicForce = maxGyroscopicForce;
+}
+
 void CcdPhysicsEnvironment::SetDeactivationTime(float dTime)
 {
 	m_deactivationTime = dTime;
+	gDeactivationTime = m_deactivationTime;
 }
 void CcdPhysicsEnvironment::SetDeactivationLinearTreshold(float linTresh)
 {
@@ -965,11 +1052,12 @@ void CcdPhysicsEnvironment::SetDeactivationAngularTreshold(float angTresh)
 void CcdPhysicsEnvironment::SetContactBreakingTreshold(float contactBreakingTreshold)
 {
 	m_contactBreakingThreshold = contactBreakingTreshold;
+	gContactBreakingThreshold = m_contactBreakingThreshold;
 }
 
 void CcdPhysicsEnvironment::SetCcdMode(int ccdMode)
 {
-	m_ccdMode = ccdMode;
+	m_dynamicsWorld->getDispatchInfo().m_useContinuous = ccdMode;
 }
 
 void CcdPhysicsEnvironment::SetSolverSorConstant(float sor)
@@ -2066,7 +2154,7 @@ void CcdPhysicsEnvironment::CallbackTriggers()
 	btDispatcher *dispatcher = m_dynamicsWorld->getDispatcher();
 	for (unsigned int i = 0, numManifolds = dispatcher->getNumManifolds(); i < numManifolds; i++) {
 		btPersistentManifold *manifold = dispatcher->getManifoldByIndexInternal(i);
-		if (manifold->getNumContacts() == 0) {
+		if (!manifold->getNumContacts()) {
 			continue;
 		}
 
@@ -2078,19 +2166,30 @@ void CcdPhysicsEnvironment::CallbackTriggers()
 
 		bool first;
 		// Test if one of the controller is registered and use collision callback.
+
+		CollisionPair pair;
 		if (ctrl0->Registered()) {
 			first = true;
+			pair.ctrl1 = ctrl0;
+			pair.ctrl2 = ctrl1;
+		//	registeredCtrl = ctrl0;
 		}
 		else if (ctrl1->Registered()) {
 			first = false;
+			pair.ctrl1 = ctrl1;
+			pair.ctrl2 = ctrl0;
+		//	registeredCtrl = ctrl1;
 		}
 		else {
 			// No controllers registered for collision callbacks.
 			continue;
 		}
-
-		const CcdCollData *coll_data = new CcdCollData(manifold);
-		m_triggerCallbacks[PHY_OBJECT_RESPONSE](m_triggerCallbacksUserPtrs[PHY_OBJECT_RESPONSE], ctrl0, ctrl1, coll_data, first);
+		auto &counter = m_callbackCounter[pair];
+		if (counter < 1) {
+			const CcdCollData *coll_data = new CcdCollData(manifold);
+			m_triggerCallbacks[PHY_OBJECT_RESPONSE](m_triggerCallbacksUserPtrs[PHY_OBJECT_RESPONSE], ctrl1, ctrl0, coll_data, first);
+			counter++;
+		}
 	}
 }
 

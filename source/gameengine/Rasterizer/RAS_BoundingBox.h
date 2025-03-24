@@ -37,6 +37,8 @@ protected:
 	/// True when the bounding box is modified.
 	bool m_modified;
 
+	bool m_bmodified;
+
 	/// The AABB minimum.
 	mt::vec3 m_aabbMin;
 	/// The AABB maximum.
@@ -44,6 +46,9 @@ protected:
 
 	/// The number of mesh user using this bounding box.
 	int m_users;
+
+	unsigned int m_i;
+	unsigned int m_size;
 	/// The manager of all the bounding boxes of a scene.
 	RAS_BoundingBoxManager *m_manager;
 

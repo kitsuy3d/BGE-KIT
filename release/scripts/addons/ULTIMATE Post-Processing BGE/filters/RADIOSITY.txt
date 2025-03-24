@@ -1,0 +1,139 @@
+uniform sampler2D bgl_DepthTexture;
+uniform sampler2D bgl_RenderedTexture;
+
+uniform float bgl_RenderedTextureWidth;
+uniform float bgl_RenderedTextureHeight;
+uniform int xs;
+
+float width = bgl_RenderedTextureWidth;
+float height = bgl_RenderedTextureHeight;
+
+vec2 texCoord = gl_TexCoord[0].st;
+
+//#######################################
+//these MUST match your current settings
+const float znear = 0.1;            //camera clipping start
+const float zfar  = 100.0;          //camera clipping end
+const float fov   = 49.1;           //check your camera settings
+const float aspectratio = 16.0/9.0; //width / height
+
+//tweak these to your liking
+
+const float directamount = 1.0;
+// I would recommend only tweaking xs and the 1.0 in indirectamount
+const int ys = int(float(xs) * aspectratio); // samples along y axis
+const float indirectamount = 1.0 / float(xs * ys);
+
+//#######################################
+
+const float fovratio = fov / 90.0;
+const float inverse_aspectratio = 1.0 / aspectratio;
+float inverse_width = 1.0 / width;
+float inverse_height = 1.0 / height;
+const int xs_plus_one = xs+1;
+const int ys_plus_one = ys+1;    
+const float one_over_xs_plus_one = 1.0 / float(xs_plus_one);
+const float one_over_ys_plus_one = 1.0 / float(ys_plus_one);
+    
+
+float getDepth(vec2 coord){
+    float zdepth = texture2D(bgl_DepthTexture,coord).x;
+    return -zfar * znear / (zdepth * (zfar - znear) - zfar);
+}
+
+vec3 getViewPosition(vec2 coord){
+    vec3 pos;
+    pos =  vec3((coord.s * 2.0 - 1.0) * fovratio, (coord.t * 2.0 - 1.0) * inverse_aspectratio * fovratio, 1.0);
+    return (pos * getDepth(coord));
+}
+
+vec3 getViewNormal(vec2 coord) {
+    float pW = inverse_width;
+    float pH = inverse_height;
+
+    vec3 p1  = getViewPosition(coord + vec2(pW,  0.0)).xyz;
+    vec3 p2  = getViewPosition(coord + vec2(0.0,  pH)).xyz;
+    vec3 p3  = getViewPosition(coord + vec2(-pW, 0.0)).xyz;
+    vec3 p4  = getViewPosition(coord + vec2(0.0, -pH)).xyz;
+
+    vec3 vP  = getViewPosition(coord);
+
+    vec3 dx  = vP - p1;
+    vec3 dy  = p2 - vP;
+    vec3 dx2 = p3 - vP;
+    vec3 dy2 = vP - p4;
+
+    if (length(dx2) < length(dx) && coord.x - pW >= 0.0 || coord.x + pW > 1.0) {
+        dx = dx2;
+    }
+    if (length(dy2) < length(dy) && coord.y - pH >= 0.0 || coord.y + pH > 1.0) {
+        dy = dy2;
+    }
+
+    return normalize(cross(dx, dy));
+}
+
+float lenSq(vec3 vector){
+    return dot(vector, vector);
+}
+
+vec4 LINEARtoSRGB(vec4 c) {
+    return pow(c, vec4(1.0/2.2));
+}
+
+vec4 SRGBtoLINEAR(vec4 c) {
+    return pow(c, vec4(2.2));
+}
+
+vec4 lightSample(vec2 lightcoord, vec3 normal, vec3 position){
+    
+    //light absolute data
+    vec4 lightcolor    = texture2D(bgl_RenderedTexture, lightcoord);
+    vec3 lightnormal   = getViewNormal(lightcoord);
+    vec3 lightposition = getViewPosition(lightcoord);
+    
+    vec3 lightpath = lightposition - position;
+    vec3 lightdir  = normalize(lightpath);
+    
+    // Scale light intensity by the distance from camera to sample squared
+    // * the reasoning is that, the farther away from the camera
+    // * the surface we are sampling is, the bigger its area is.
+    // * therefore, the more light it emits.
+    float a = lenSq(lightposition);
+    
+    //falloff calculations
+    float cosemit  = max(dot(lightdir, -lightnormal), 0.0); //emit only in one direction
+
+    //TODO: change this for interpolation between Half-Lambert and regular Lambert based on distance
+    float coscatch = max(dot(lightdir,       normal), 0.0); //recieve light from one direction
+    
+    float dsq = lenSq(lightpath);
+    float distfall = (dsq+5.0); // +5.0 is just a magic number to prevent 1/dsq from going to infinity
+    
+    return SRGBtoLINEAR(lightcolor) * cosemit * coscatch / distfall * a;
+}
+
+void main(void){
+
+    //fragment color data
+    vec4 image  = texture2D(bgl_RenderedTexture,texCoord);
+    vec4 direct = SRGBtoLINEAR(image);
+    vec4 color  = SRGBtoLINEAR(vec4(normalize(image.xyz),1));
+    vec4 indirect = vec4(0,0,0,1);
+    
+    //fragment geometry data
+    vec3 position = getViewPosition(texCoord);
+    vec3 normal   = getViewNormal(texCoord);
+    
+    //light samples
+    for(int i = 1; i < xs_plus_one; i++){
+        for(int j = 1; j < ys_plus_one; j++){
+            vec2 lightcoord = vec2(float(i) * one_over_xs_plus_one, float(j) * one_over_ys_plus_one);
+            indirect += lightSample( lightcoord, normal, position );
+        }
+    }
+    
+    gl_FragColor = LINEARtoSRGB(direct * directamount + indirect * indirectamount * color);
+    
+}
+

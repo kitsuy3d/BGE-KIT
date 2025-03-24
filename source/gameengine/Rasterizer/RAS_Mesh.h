@@ -119,6 +119,8 @@ protected:
 
 	std::vector<PolygonRangeInfo> m_polygonRanges;
 	unsigned int m_numPolygons;
+	unsigned short m_i;
+	unsigned short m_size;
 
 	std::string m_name;
 

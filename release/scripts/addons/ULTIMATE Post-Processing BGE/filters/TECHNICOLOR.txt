@@ -1,0 +1,35 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform vec3 ColorStrength = vec3(0.2, 0.2, 0.2);
+uniform float Brightness = 1.0;
+uniform float Saturation = 1.0;
+uniform float Strength = 1.0;
+
+void main(void)
+{
+    vec2 texcoord = gl_TexCoord[0].st;
+
+    // Get the original color from the texture
+    vec3 color = texture2D(bgl_RenderedTexture, texcoord).rgb;
+
+    // Technicolor effect
+    vec3 temp = 1.0 - color;
+    vec3 target = temp.grg;
+    vec3 target2 = temp.bbr;
+    vec3 temp2 = color * target;
+    temp2 *= target2;
+
+    temp = temp2 * ColorStrength;
+    temp2 *= Brightness;
+
+    target = temp.grg;
+    target2 = temp.bbr;
+
+    temp = color - target;
+    temp += temp2;
+    temp2 = temp - target2;
+
+    color = mix(color, temp2, Strength);
+    color = mix(vec3(dot(color, vec3(0.333))), color, Saturation);
+
+    gl_FragColor = vec4(color, 1.0);
+}

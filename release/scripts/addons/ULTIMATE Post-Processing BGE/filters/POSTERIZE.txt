@@ -1,0 +1,14 @@
+uniform sampler2D bgl_RenderedTexture;
+uniform float posterizeLevel;
+
+void main()
+{
+    // Get the texture color at the current fragment
+    vec4 color = texture2D(bgl_RenderedTexture, gl_TexCoord[0].st);
+
+    // Apply the posterization effect
+    vec3 posterizedColor = floor(color.rgb * posterizeLevel) / posterizeLevel;
+
+    // Set the output color
+    gl_FragColor = vec4(posterizedColor, color.a);
+}

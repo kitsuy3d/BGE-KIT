@@ -1,0 +1,37 @@
+// Glitch Effect Shader for BGE
+uniform sampler2D bgl_RenderedTexture;   // Input texture
+uniform float timer;                     // Time for animation
+uniform float shake_power = 0.04;        // Shake intensity
+uniform float shake_rate = 0.2;          // Shake frequency
+uniform float shake_speed = 4.0;         // Shake speed
+uniform float shake_block_size = 50.0;   // Block size for shaking
+uniform float shake_color_rate = 0.01;   // Color separation rate
+uniform float bgl_RenderedTextureWidth;  // Width of the rendered texture
+uniform float bgl_RenderedTextureHeight; // Height of the rendered texture
+
+// Function to generate pseudo-random values
+float random(float seed) {
+    return fract(543.2543 * sin(dot(vec2(seed, seed), vec2(3525.46, -54.3415))));
+}
+
+void main() {
+    // Normalize coordinates based on texture size
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight); 
+
+    // Determine if we should apply the shift
+    float enable_shift = float(random(trunc(timer * shake_speed)) < shake_rate);
+
+    // Calculate the x-offset for shaking
+    float blockIndex = trunc(uv.y * shake_block_size) / shake_block_size;
+    uv.x += (random(blockIndex + timer) - 0.5) * shake_power * enable_shift;
+
+    // Sample the original pixel color
+    vec4 pixel_color = texture(bgl_RenderedTexture, uv);
+
+    // Apply color separation
+    pixel_color.r = mix(pixel_color.r, texture(bgl_RenderedTexture, uv + vec2(shake_color_rate, 0.0)).r, enable_shift);
+    pixel_color.b = mix(pixel_color.b, texture(bgl_RenderedTexture, uv + vec2(-shake_color_rate, 0.0)).b, enable_shift);
+
+    // Output the final color
+    gl_FragColor = pixel_color;
+}

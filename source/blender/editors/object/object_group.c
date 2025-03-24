@@ -412,7 +412,7 @@ void OBJECT_OT_group_add(wmOperatorType *ot)
 	/* identifiers */
 	ot->name = "Add to Group";
 	ot->idname = "OBJECT_OT_group_add";
-	ot->description = "Add an object to a new group";
+	ot->description = "Add an object to a new group, Add Key: Ctrl-G, Remove Key: Ctrl-Alt-G, Removing from All Key: Shift-Ctrl-Alt-G, Add Selected to Active Group Key: Shift-Ctrl-G, Remove Selected from Active Group Key: Shift-Alt-G, Python: own.groupObject.groupMembers[0], Use: Group objects together without any kind of transformation relationship. Use groups to just logically organize your scene, or to facilitate one-step appending or linking between files or across scenes. Objects that are part of a group always shows as light green when selected.";
 
 	/* api callbacks */
 	ot->exec = group_add_exec;
@@ -464,7 +464,7 @@ void OBJECT_OT_group_link(wmOperatorType *ot)
 	/* identifiers */
 	ot->name = "Link to Group";
 	ot->idname = "OBJECT_OT_group_link";
-	ot->description = "Add an object to an existing group";
+	ot->description = "Add an object to an existing group, Add Selected to Active Group Key: Shift-Ctrl-G";
 
 	/* api callbacks */
 	ot->exec = group_link_exec;
@@ -475,7 +475,7 @@ void OBJECT_OT_group_link(wmOperatorType *ot)
 	ot->flag = OPTYPE_REGISTER | OPTYPE_UNDO;
 
 	/* properties */
-	prop = RNA_def_enum(ot->srna, "group", DummyRNA_NULL_items, 0, "Group", "");
+	prop = RNA_def_enum(ot->srna, "group", DummyRNA_NULL_items, 0, "Group Object", "");
 	RNA_def_enum_funcs(prop, RNA_group_local_itemf);
 	RNA_def_property_flag(prop, PROP_ENUM_NO_TRANSLATE);
 	ot->prop = prop;
@@ -503,7 +503,7 @@ void OBJECT_OT_group_remove(wmOperatorType *ot)
 	/* identifiers */
 	ot->name = "Remove Group";
 	ot->idname = "OBJECT_OT_group_remove";
-	ot->description = "Remove the active object from this group";
+	ot->description = "Remove the active object from this group, Remove Selected from Active Group Key: Shift-Alt-G";
 
 	/* api callbacks */
 	ot->exec = group_remove_exec;

@@ -63,7 +63,7 @@ const EnumPropertyItem rna_enum_texture_type_items[] = {
 	                "Distorted Noise", "Procedural - noise texture distorted by two noise algorithms"},
 	{TEX_ENVMAP, "ENVIRONMENT_MAP", ICON_IMAGE_DATA,
 	             "Environment Map", "Create a render of the environment mapped to a texture"},
-	{TEX_IMAGE, "IMAGE", ICON_IMAGE_DATA, "Image or Movie", "Allow for images or movies to be used as textures"},
+	{TEX_IMAGE, "IMAGE", ICON_IMAGE_DATA, "Image or Movie", "Allow for images or movies to be used as textures, Tip: Power of two .DDS has a lot lower cost"},
 	{TEX_MAGIC, "MAGIC", ICON_TEXTURE, "Magic", "Procedural - color texture based on trigonometric functions"},
 	{TEX_MARBLE, "MARBLE", ICON_TEXTURE, "Marble", "Procedural - marble-like noise texture with wave generated bands"},
 	{TEX_MUSGRAVE, "MUSGRAVE", ICON_TEXTURE, "Musgrave", "Procedural - highly flexible fractal noise texture"},

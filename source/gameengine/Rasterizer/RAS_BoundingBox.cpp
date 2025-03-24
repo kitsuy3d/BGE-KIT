@@ -31,9 +31,12 @@
 
 RAS_BoundingBox::RAS_BoundingBox(RAS_BoundingBoxManager *manager)
 	:m_modified(false),
+	m_bmodified(false),
 	m_aabbMin(mt::zero3),
 	m_aabbMax(mt::zero3),
 	m_users(0),
+	m_i(0),
+	m_size(0),
 	m_manager(manager)
 {
 	BLI_assert(m_manager);
@@ -156,28 +159,28 @@ RAS_BoundingBox *RAS_MeshBoundingBox::GetReplica()
 
 void RAS_MeshBoundingBox::Update(bool force)
 {
-	bool modified = false;
+	m_bmodified = false;
 	for (DisplayArraySlot& slot : m_slots) {
 		RAS_DisplayArray *array = slot.m_displayArray;
 		// Select modified display array or all if the update is forced.
 		if (!slot.m_arrayUpdateClient.GetInvalidAndClear() && !force) {
 			continue;
 		}
-		modified = true;
+		m_bmodified = true;
 
 		slot.m_aabbMin = mt::vec3(FLT_MAX);
 		slot.m_aabbMax = mt::vec3(-FLT_MAX);
 
 		// For each vertex.
-		for (unsigned int i = 0, size = array->GetVertexCount(); i < size; ++i) {
-			const mt::vec3 vertPos(array->GetPosition(i));
+		for (m_i = 0, m_size = array->GetVertexCount(); m_i < m_size; ++m_i) {
+			const mt::vec3 vertPos(array->GetPosition(m_i));
 
 			slot.m_aabbMin = mt::vec3::Min(slot.m_aabbMin, vertPos);
 			slot.m_aabbMax = mt::vec3::Max(slot.m_aabbMax, vertPos);
 		}
 	}
 
-	if (modified) {
+	if (m_bmodified) {
 		m_aabbMin = mt::vec3(FLT_MAX);
 		m_aabbMax = mt::vec3(-FLT_MAX);
 

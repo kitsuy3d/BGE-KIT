@@ -43,10 +43,10 @@ struct btContactSolverInfoData
 	btScalar	m_restitution;
 	int		m_numIterations;
 	btScalar	m_maxErrorReduction;
-	btScalar	m_sor;
-	btScalar	m_erp;//used as Baumgarte factor
-	btScalar	m_erp2;//used in Split Impulse
-	btScalar	m_globalCfm;//constraint force mixing
+	btScalar	m_sor;//successive over-relaxation term
+	btScalar	m_erp;// error reduction for non-contact constraints
+	btScalar	m_erp2;// error reduction for contact constraints
+	btScalar	m_globalCfm;// constraint force mixing for contacts and non-contacts
 	int			m_splitImpulse;
 	btScalar	m_splitImpulsePenetrationThreshold;
 	btScalar	m_splitImpulseTurnErp;
@@ -74,21 +74,32 @@ struct btContactSolverInfo : public btContactSolverInfoData
 		m_friction = btScalar(0.3);
 		m_timeStep = btScalar(1.f/60.f);
 		m_restitution = btScalar(0.);
-		m_maxErrorReduction = btScalar(20.);
+		m_maxErrorReduction = btScalar(20.);// not used I think.
 		m_numIterations = 10;
-		m_erp = btScalar(0.2);
-		m_erp2 = btScalar(0.8);
-		m_globalCfm = btScalar(0.);
-		m_sor = btScalar(1.);
-		m_splitImpulse = true;
-		m_splitImpulsePenetrationThreshold = -.04f;
-		m_splitImpulseTurnErp = 0.1f;
-		m_linearSlop = btScalar(0.0);
-		m_warmstartingFactor=btScalar(0.85);
+		m_erp = btScalar(0.2);// used if not using Split Impulse, ERP/Baumgarte means that instead of computing the relative velocity at your contact to become zero you add a little bias proportional to the penetration depth.
+		m_erp2 = btScalar(0.8);// used in Split Impulse,  "Solver Constraint Error Reduction Parameter" (ERP), which controls how aggressively the physics solver attempts to correct constraint violations during each simulation step; essentially, it determines how quickly the system tries to eliminate any errors that occur when objects are not adhering to the defined constraints, like joint limits or contact points
+		m_globalCfm = btScalar(0.);// Constraint Force Mixing, [0;infty], A nonzero (positive) value of CFM allows the original constraint equation to be violated by an amount proportional to CFM times the restoring force \lambda that is needed to enforce the constraint.
+		m_sor = btScalar(1.);// This parameter typically ranges from 0 to 1, where 0 means the solver will barely try to correct errors (leading to potential drifting) and 1 means it will aggressively attempt to fix all errors immediately (which could cause instability in certain scenarios).
+		m_splitImpulse = true;  // by default, Bullet solves positional constraints and velocity constraints coupled together. This works well in many cases, but the error reduction of position coupled to velocity introduces extra energy (noticeable as 'bounce').
+								// Instead of coupled positional and velocity constraint solving, the two can be solved separately using the 'split impulse' option. This means that recovering from deep penetrations doesn't add any velocity when this option is checked.
+								// Although this removes most of the extra energy/bounce, it degenerates quality a little bit, in particular for stable stacking. Hence, the setting should be disabled.
+								// Also note that the split impulse option is only enabled for contact constraints, and none of the other joints (hinge/ball socket and so on), for quality reasons
+		m_splitImpulsePenetrationThreshold = -.02f;
+		m_splitImpulseTurnErp = 0.1f;// constraint solving error reduction
+		m_linearSlop = btScalar(0.0);// Defines the penetration depth for object collisions.
+									// this value is measured in world units. A value of 1 equals to 1 unit penetration depth (overlapping).
+									// It is recommended to use the default value of 0.
+		
+		m_warmstartingFactor=btScalar(0.85);// was 0.85 Bullet uses an iterative algorithm where each iteration is based on the solution of previous iteration.
+											// If no warmstarting is used, the initial solution for Bullet is set to zero each frame.
+											// When using warmstarting, the first iteration uses the last solution of the previous frame.
+											// This improves convergence towards a better solution and hence stacking stability. 
+											// Defines how much of the previous impulse is used for the next calculation step. A value of zero will turn off warmstarting a value of 1 will use the original value.
+
 		//m_solverMode =  SOLVER_USE_WARMSTARTING |  SOLVER_SIMD | SOLVER_DISABLE_VELOCITY_DEPENDENT_FRICTION_DIRECTION|SOLVER_USE_2_FRICTION_DIRECTIONS|SOLVER_ENABLE_FRICTION_DIRECTION_CACHING;// | SOLVER_RANDMIZE_ORDER;
 		m_solverMode = SOLVER_USE_WARMSTARTING | SOLVER_SIMD;// | SOLVER_RANDMIZE_ORDER;
 		m_restingContactRestitutionThreshold = 2;//unused as of 2.81
-		m_minimumSolverBatchSize = 128; //try to combine islands until the amount of constraints reaches this limit
+		m_minimumSolverBatchSize = 512; //try to combine islands until the amount of constraints reaches this limit
 		m_maxGyroscopicForce = 100.f; ///it is only used for 'explicit' version of gyroscopic force
 		m_singleAxisRollingFrictionThreshold = 1e30f;///if the velocity is above this threshold, it will use a single constraint row (axis), otherwise 3 rows.
 	}
@@ -140,7 +151,7 @@ struct btContactSolverInfoFloatData
 	float		m_splitImpulsePenetrationThreshold;
 	float		m_splitImpulseTurnErp;
 
-	float		m_linearSlop;
+	float		m_linearSlop;// Defines the penetration depth for object collisions. this value is measured in world units. A value of 1 equals to 1 unit penetration depth (overlapping). It is recommended to use the default value of 0. 
 	float		m_warmstartingFactor;
 	float		m_maxGyroscopicForce;
 	float		m_singleAxisRollingFrictionThreshold;

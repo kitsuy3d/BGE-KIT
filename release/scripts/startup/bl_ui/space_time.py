@@ -43,16 +43,20 @@ class TIME_HT_header(Header):
 
         row = layout.row(align=True)
         if not scene.use_preview_range:
-            row.prop(scene, "frame_start", text="Start")
-            row.prop(scene, "frame_end", text="End")
+            row.prop(scene, "frame_start", text="")
+            row.prop(scene, "frame_end", text="")
         else:
-            row.prop(scene, "frame_preview_start", text="Start")
-            row.prop(scene, "frame_preview_end", text="End")
+            row.prop(scene, "frame_preview_start", text="")
+            row.prop(scene, "frame_preview_end", text="")
 
         if scene.show_subframe:
             layout.prop(scene, "frame_float", text="")
         else:
             layout.prop(scene, "frame_current", text="")
+
+        gs = context.scene.game_settings
+        row = layout.row(align=True)
+        row.prop(context.scene.render, "fps", text="", icon="OUTLINER_OB_ARMATURE")
 
         layout.separator()
 

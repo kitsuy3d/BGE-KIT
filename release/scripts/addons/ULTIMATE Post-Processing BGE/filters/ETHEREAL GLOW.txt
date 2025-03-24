@@ -1,0 +1,31 @@
+// Glowing Vignette Shader
+uniform sampler2D bgl_RenderedTexture;   // Input texture
+uniform float timer;                     // Time for animation, if needed
+uniform float bgl_RenderedTextureWidth;  // Screen width
+uniform float bgl_RenderedTextureHeight; // Screen height
+uniform float intensity;                 // Controls the strength of the vignette glow
+// Ethereal Glow
+void main()
+{
+    // Get the UV coordinates based on screen resolution
+    vec2 uv = gl_FragCoord.xy / vec2(bgl_RenderedTextureWidth, bgl_RenderedTextureHeight);
+
+    // Calculate the distance of the pixel from the center of the screen
+    vec2 center = vec2(0.5, 0.5);
+    float dist = distance(uv, center);
+
+    // Generate a soft vignette glow that becomes stronger at the edges
+    float glow = smoothstep(0.4, 0.8, dist) * intensity;
+
+    // Get the base color from the texture
+    vec4 color = texture2D(bgl_RenderedTexture, uv);
+
+    // Apply a subtle pulsing effect to the glow over time
+    glow += sin(timer * 2.0) * 0.05 * intensity;
+
+    // Add the glow to the color, creating a vignette effect
+    color.rgb += glow * vec3(0.2, 0.15, 0.3); // Slight tint for a more mystical effect
+
+    // Output the final color
+    gl_FragColor = vec4(color.rgb, 1.0);
+}

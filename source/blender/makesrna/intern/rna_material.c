@@ -614,7 +614,7 @@ static void rna_def_material_mtex(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "use_map_hardness", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "mapto", MAP_HAR);
-	RNA_def_property_ui_text(prop, "Hardness", "The texture affects the hardness value");
+	RNA_def_property_ui_text(prop, "Hardness", "The texture affects the hardness value, Python: own.meshes[0].materials[0].hardness = 50");
 	RNA_def_property_update(prop, 0, "rna_Material_update");
 
 	prop = RNA_def_property(srna, "use_map_raymir", PROP_BOOLEAN, PROP_NONE);
@@ -997,13 +997,13 @@ static void rna_def_material_colors(StructRNA *srna)
 	prop = RNA_def_property(srna, "diffuse_color", PROP_FLOAT, PROP_COLOR);
 	RNA_def_property_float_sdna(prop, NULL, "r");
 	RNA_def_property_array(prop, 3);
-	RNA_def_property_ui_text(prop, "Diffuse Color", "Diffuse color of the material");
+	RNA_def_property_ui_text(prop, "Diffuse Color", "Diffuse color of the material,  Python: own.meshes[0].materials[0].diffuseColor = mathutils.Color((1.0, 0.0, 0.0))");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "specular_color", PROP_FLOAT, PROP_COLOR);
 	RNA_def_property_float_sdna(prop, NULL, "specr");
 	RNA_def_property_array(prop, 3);
-	RNA_def_property_ui_text(prop, "Specular Color", "Specular color of the material");
+	RNA_def_property_ui_text(prop, "Specular Color", "Specular color of the material, Python: own.meshes[0].materials[0].specularColor = mathutils.Color((1.0, 0.0, 0.0))");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "mirror_color", PROP_FLOAT, PROP_COLOR);
@@ -1014,13 +1014,13 @@ static void rna_def_material_colors(StructRNA *srna)
 
 	prop = RNA_def_property(srna, "alpha", PROP_FLOAT, PROP_FACTOR);
 	RNA_def_property_range(prop, 0.0f, 1.0f);
-	RNA_def_property_ui_text(prop, "Alpha", "Alpha transparency of the material");
+	RNA_def_property_ui_text(prop, "Alpha", "Alpha transparency of the material, Python: own.meshes[0].materials[0].alpha = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "specular_alpha", PROP_FLOAT, PROP_FACTOR);
 	RNA_def_property_float_sdna(prop, NULL, "spectra");
 	RNA_def_property_range(prop, 0.0f, 1.0f);
-	RNA_def_property_ui_text(prop, "Specular Alpha", "Alpha transparency for specular areas");
+	RNA_def_property_ui_text(prop, "Specular Alpha", "Alpha transparency for specular areas, Python: own.meshes[0].materials[0].specularAlpha = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_update");
 
 	/* Color bands */
@@ -1123,7 +1123,7 @@ static void rna_def_material_diffuse(StructRNA *srna)
 	prop = RNA_def_property(srna, "diffuse_intensity", PROP_FLOAT, PROP_FACTOR);
 	RNA_def_property_float_sdna(prop, NULL, "ref");
 	RNA_def_property_range(prop, 0.0f, 1.0f);
-	RNA_def_property_ui_text(prop, "Diffuse Intensity", "Amount of diffuse reflection");
+	RNA_def_property_ui_text(prop, "Diffuse Intensity", "Amount of diffuse reflection, Python: own.meshes[0].materials[0].diffuseIntensity = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "roughness", PROP_FLOAT, PROP_NONE);
@@ -1724,7 +1724,7 @@ static void rna_def_material_specularity(StructRNA *srna)
 	prop = RNA_def_property(srna, "specular_intensity", PROP_FLOAT, PROP_FACTOR);
 	RNA_def_property_float_sdna(prop, NULL, "spec");
 	RNA_def_property_range(prop, 0, 1);
-	RNA_def_property_ui_text(prop, "Specular Intensity", "How intense (bright) the specular reflection is");
+	RNA_def_property_ui_text(prop, "Specular Intensity", "How intense (bright) the specular reflection is, Python: own.meshes[0].materials[0].specularIntensity = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	/* NOTE: "har", "param", etc are used for multiple purposes depending on
@@ -1898,7 +1898,7 @@ void RNA_def_material(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "use_constant_material", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "constflag", MA_CONSTANT_MATERIAL);
-	RNA_def_property_ui_text(prop, "Material", "Use constant values for material");
+	RNA_def_property_ui_text(prop, "Material", "Use constant values for material, true off to change with python");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "use_constant_lamp", PROP_BOOLEAN, PROP_NONE);
@@ -1959,13 +1959,13 @@ void RNA_def_material(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "ambient", PROP_FLOAT, PROP_FACTOR);
 	RNA_def_property_float_sdna(prop, NULL, "amb");
 	RNA_def_property_range(prop, 0, 1);
-	RNA_def_property_ui_text(prop, "Ambient", "Amount of global ambient color the material receives");
+	RNA_def_property_ui_text(prop, "Ambient", "Amount of global ambient color the material receives, Python: own.meshes[0].materials[0].ambient = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_update");
 
 	prop = RNA_def_property(srna, "emit", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_range(prop, 0, FLT_MAX);
 	RNA_def_property_ui_range(prop, 0, 2.0f, 1, 2);
-	RNA_def_property_ui_text(prop, "Emit", "Amount of light to emit");
+	RNA_def_property_ui_text(prop, "Emit", "Amount of light to emit, Python: own.meshes[0].materials[0].emit = 1.0");
 	RNA_def_property_update(prop, 0, "rna_Material_draw_update");
 
 	prop = RNA_def_property(srna, "translucency", PROP_FLOAT, PROP_FACTOR);
@@ -2021,7 +2021,7 @@ void RNA_def_material(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "pass_index", PROP_INT, PROP_UNSIGNED);
 	RNA_def_property_int_sdna(prop, NULL, "index");
-	RNA_def_property_ui_text(prop, "Pass Index", "Index number for the \"Material Index\" render pass");
+	RNA_def_property_ui_text(prop, "Pass Index", "Each object within a scene can be given a number (an Object Index Pass Number). This number can then be used by the Nodes editor to do things like only apply certain affects to an object if it has or does not have a certain Object Index Pass Number. For example you could have 2 sphere objects, each with different Object Index Pass Numbers and only apply for example a color or a blur effect to one of them based on it’s Object Index Pass Number using for example the ID Mask node. For the Object Index Pass item to be available in the Nodes you have to make sure that it is turned on in the Render Layers button panel, can be used with 2D filters");
 	RNA_def_property_update(prop, NC_OBJECT, "rna_Material_update");
 
 	/* flags */

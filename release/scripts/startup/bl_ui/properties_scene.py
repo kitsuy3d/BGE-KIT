@@ -73,6 +73,7 @@ class SCENE_PT_scene(SceneButtonsPanel, Panel):
 
         scene = context.scene
 
+        #layout.label(text=scene.statistics(), translate=0)
         layout.prop(scene, "camera")
         layout.prop(scene, "background_set", text="Background")
         if context.scene.render.engine != 'BLENDER_GAME':
@@ -446,9 +447,9 @@ class SCENE_PT_custom_props(SceneButtonsPanel, PropertyPanel, Panel):
 
 
 classes = (
+    SCENE_PT_scene,
     SCENE_MT_units_length_presets,
     SCENE_UL_keying_set_paths,
-    SCENE_PT_scene,
     SCENE_PT_unit,
     SCENE_PT_keying_sets,
     SCENE_PT_keying_set_paths,

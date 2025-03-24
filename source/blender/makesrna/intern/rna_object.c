@@ -1646,30 +1646,34 @@ static void rna_def_game_object_activity_culling(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "physics_radius", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "physicsRadius");
 	RNA_def_property_range(prop, 0.0, FLT_MAX);
-	RNA_def_property_ui_text(prop, "Physics Radius", "Distance to begin suspend physics of this object");
+	RNA_def_property_ui_text(prop, "Physics Radius", "Distance to begin suspend physics logic and animation of this object, Python: own.physicsCullingRadius = 500.0");
 
 	prop = RNA_def_property(srna, "logic_radius", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "logicRadius");
 	RNA_def_property_range(prop, 0.0, FLT_MAX);
-	RNA_def_property_ui_text(prop, "Logic Radius", "Distance to begin suspend logic and animation of this object");
+	RNA_def_property_ui_text(prop, "Logic Radius", "Distance to begin suspend logic and animation of this object, Python: own.logicCullingRadius = 500.0");
 
 	prop = RNA_def_property(srna, "use_physics", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_PHYSICS);
-	RNA_def_property_ui_text(prop, "Cull Physics", "Suspend physics of this object by its distance to nearest camera");
+	RNA_def_property_ui_text(prop, "Cull Physics", "Suspend physics logic and Render of this object by its distance to nearest camera, Python: own.physicsCulling = 1, own.suspendPhysics(), own.restorePhysics()");
 
-	prop = RNA_def_property(srna, "sleep_velocity", PROP_BOOLEAN, PROP_NONE);
-	RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_PHYSICS_SLEEPVELOCITY);
-	RNA_def_property_boolean_default(prop, true);
-	RNA_def_property_ui_text(prop, "Cull Physics Velocity", "Stop physics after the object stops");
+	//prop = RNA_def_property(srna, "use_physics_low", PROP_BOOLEAN, PROP_NONE);
+	//RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_PHYSICS_LOW);
+	//RNA_def_property_ui_text(prop, "Physics Low", "Turn physics and logic on and off every frame, Python: own.physicsLow = 1");
+
+	//prop = RNA_def_property(srna, "sleep_velocity", PROP_BOOLEAN, PROP_NONE);
+	//RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_PHYSICS_SLEEPVELOCITY);
+	//RNA_def_property_boolean_default(prop, true);
+	//RNA_def_property_ui_text(prop, "Cull Physics Velocity", "Stop physics after the object stops, Python: own.physicsCullingVelocity = 1");
 
 	prop = RNA_def_property(srna, "use_logic", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_LOGIC);
-	RNA_def_property_ui_text(prop, "Cull Logic", "Suspend logic and animation of this object by its distance to nearest camera");
+	RNA_def_property_ui_text(prop, "Cull Logic", "Suspend logic animations and Render of this object by its distance to nearest camera, Python: own.logicCulling = 1");
 
-	prop = RNA_def_property(srna, "activity_components", PROP_BOOLEAN, PROP_NONE);
-	RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_LOGIC_COMPONENTS);
-	RNA_def_property_boolean_default(prop, true);
-	RNA_def_property_ui_text(prop, "Cull Activity Components", "No Suspend execution of object components");
+	//prop = RNA_def_property(srna, "activity_components", PROP_BOOLEAN, PROP_NONE);
+	//RNA_def_property_boolean_sdna(prop, NULL, "flags", OB_ACTIVITY_LOGIC_COMPONENTS);
+	//RNA_def_property_boolean_default(prop, true);
+	//RNA_def_property_ui_text(prop, "Cull Activity Components", "No Suspend execution of object components, Python: own.logicCullingComponents = 1");
 
 }
 
@@ -1759,7 +1763,7 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "mass", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_range(prop, 0.01, 1000000.0);
 	RNA_def_property_float_default(prop, 1.0f);
-	RNA_def_property_ui_text(prop, "Mass", "Mass of the object");
+	RNA_def_property_ui_text(prop, "Mass", "Mass of the object, Python: own.mass = 1.0");
 
 	prop = RNA_def_property(srna, "radius", PROP_FLOAT, PROP_NONE | PROP_UNIT_LENGTH);
 	RNA_def_property_float_sdna(prop, NULL, "inertia");
@@ -1777,38 +1781,38 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 	RNA_def_property_float_sdna(prop, NULL, "damping");
 	RNA_def_property_range(prop, 0.0, 1.0);
 	RNA_def_property_float_default(prop, 0.04f);
-	RNA_def_property_ui_text(prop, "Damping", "General movement damping");
+	RNA_def_property_ui_text(prop, "Damping", "General movement damping, Python: own.linearDamping = 1.0, stops every logic frame, Same as: own.linearVelocity *= 0.0");
 
 	prop = RNA_def_property(srna, "rotation_damping", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "rdamping");
 	RNA_def_property_range(prop, 0.0, 1.0);
 	RNA_def_property_float_default(prop, 0.1f);
-	RNA_def_property_ui_text(prop, "Rotation Damping", "General rotation damping");
+	RNA_def_property_ui_text(prop, "Rotation Damping", "General rotation damping, Python: own.angularDamping = 1.0, stops every logic frame, Same as: own.angularVelocity *= 0.0");
 
 	prop = RNA_def_property(srna, "velocity_min", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "min_vel");
 	RNA_def_property_range(prop, 0.0, 1000.0);
 	RNA_def_property_ui_text(prop, "Velocity Min", "Clamp velocity to this minimum speed (except when totally still), "
-	                         "in distance per second");
+	                         "in distance per second, Python: own.linVelocityMin = 0.0");
 
 	prop = RNA_def_property(srna, "velocity_max", PROP_FLOAT, PROP_DISTANCE);
 	RNA_def_property_float_sdna(prop, NULL, "max_vel");
 	RNA_def_property_range(prop, 0.0, 1000.0);
 	RNA_def_property_ui_text(prop, "Velocity Max", "Clamp velocity to this maximum speed, "
-	                         "in distance per second");
+	                         "in distance per second, Python: own.linVelocityMax = 150.0");
 
 	prop = RNA_def_property(srna, "angular_velocity_min", PROP_FLOAT, PROP_ANGLE);
 	RNA_def_property_float_sdna(prop, NULL, "min_angvel");
 	RNA_def_property_range(prop, 0.0, 1000.0);
 	RNA_def_property_ui_text(prop, "Angular Velocity Min",
 	                         "Clamp angular velocity to this minimum speed (except when totally still), "
-	                         "in angle per second");
+	                         "in angle per second, Python: own.angularVelocityMin = 0.0");
 
 	prop = RNA_def_property(srna, "angular_velocity_max", PROP_FLOAT, PROP_ANGLE);
 	RNA_def_property_float_sdna(prop, NULL, "max_angvel");
 	RNA_def_property_range(prop, 0.0, 1000.0);
 	RNA_def_property_ui_text(prop, "Angular Velocity Max", "Clamp angular velocity to this maximum speed, "
-	                         "in angle per second");
+	                         "in angle per second, Python: own.angularVelocityMax = 0.0");
 
 	/* Character physics */
 	prop = RNA_def_property(srna, "step_height", PROP_FLOAT, PROP_NONE);
@@ -1859,13 +1863,13 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "collision_group", PROP_BOOLEAN, PROP_LAYER_MEMBER);
 	RNA_def_property_boolean_sdna(prop, NULL, "col_group", 1);
 	RNA_def_property_array(prop, OB_MAX_COL_MASKS);
-	RNA_def_property_ui_text(prop, "Collision Group", "The collision group of the object");
+	RNA_def_property_ui_text(prop, "", "The collision group of the object, Python: own.collisionGroup = 1");
 	RNA_def_property_boolean_funcs(prop, "rna_GameObjectSettings_col_group_get", "rna_GameObjectSettings_col_group_set");
 
 	prop = RNA_def_property(srna, "collision_mask", PROP_BOOLEAN, PROP_LAYER_MEMBER);
 	RNA_def_property_boolean_sdna(prop, NULL, "col_mask", 1);
 	RNA_def_property_array(prop, OB_MAX_COL_MASKS);
-	RNA_def_property_ui_text(prop, "Collision Mask", "The groups this object can collide with");
+	RNA_def_property_ui_text(prop, "", "The groups this object can collide with, own.collisionMask = 1");
 	RNA_def_property_boolean_funcs(prop, "rna_GameObjectSettings_col_mask_get", "rna_GameObjectSettings_col_mask_set");
 
 	/* lock position */
@@ -1946,12 +1950,12 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "collision_margin", PROP_FLOAT, PROP_NONE | PROP_UNIT_LENGTH);
 	RNA_def_property_float_sdna(prop, NULL, "margin");
-	RNA_def_property_range(prop, 0.0, 1.0);
+	RNA_def_property_range(prop, -10.0, 10.0);
 	RNA_def_property_float_default(prop, 0.04f);
 	RNA_def_property_ui_text(prop, "Collision Margin",
 	                         "Extra margin around object for collision detection, small amount required "
 	                         "for stability. In most cases margin can be set to 0.0 for static/not moving objects."
-							 "If you have jittering, decrease the margin");
+							 "If you have jittering, decrease the margin, Python: own.setCollisionMargin(0.04)");
 
 	prop = RNA_def_property(srna, "soft_body", PROP_POINTER, PROP_NONE);
 	RNA_def_property_pointer_sdna(prop, NULL, "bsoft");
@@ -1969,17 +1973,17 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "friction", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "friction");
-	RNA_def_property_range(prop, 0, 100);
-	RNA_def_property_ui_text(prop, "Friction", "Coulomb friction coefficient, when inside the physics distance area");
+	RNA_def_property_range(prop, 0, 10000);
+	RNA_def_property_ui_text(prop, "Friction", "Coulomb friction coefficient, when inside the physics distance area, Python: own.friction = 0.5");
 
 	prop = RNA_def_property(srna, "rolling_friction", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "rolling_friction");
-	RNA_def_property_range(prop, 0, 100);
+	RNA_def_property_range(prop, 0, 10000);
 	RNA_def_property_ui_text(prop, "Rolling Friction", "Coulomb friction coefficient of rounded shapes");
 
 	prop = RNA_def_property(srna, "elasticity", PROP_FLOAT, PROP_NONE);
 	RNA_def_property_float_sdna(prop, NULL, "reflect");
-	RNA_def_property_range(prop, 0, 1);
+	RNA_def_property_range(prop, -10, 10);
 	RNA_def_property_ui_text(prop, "Elasticity", "Elasticity of collisions");
 
 	/* FH/Force Field Settings */
@@ -2010,7 +2014,7 @@ static void rna_def_object_game_settings(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "states_visible", PROP_BOOLEAN, PROP_LAYER_MEMBER);
 	RNA_def_property_boolean_sdna(prop, NULL, "state", 1);
 	RNA_def_property_array(prop, OB_MAX_STATES);
-	RNA_def_property_ui_text(prop, "State", "State determining which controllers are displayed");
+	RNA_def_property_ui_text(prop, "State", "State determining which controllers are displayed, own.state = 1");
 	RNA_def_property_boolean_funcs(prop, "rna_GameObjectSettings_state_get", "rna_GameObjectSettings_state_set");
 
 	prop = RNA_def_property(srna, "used_states", PROP_BOOLEAN, PROP_LAYER_MEMBER);
@@ -2329,7 +2333,7 @@ static void rna_def_object(BlenderRNA *brna)
 	static int boundbox_dimsize[] = {8, 3};
 
 	srna = RNA_def_struct(brna, "Object", "ID");
-	RNA_def_struct_ui_text(srna, "Object", "Object data-block defining an object in a scene");
+	RNA_def_struct_ui_text(srna, "Object", "Object data-block defining an object in a scene, Python: if own.invalid!=True:own.name = 'player', if own.sensors[0].positive:own.actuators[0].value = 1");
 	RNA_def_struct_clear_flag(srna, STRUCT_ID_REFCOUNT);
 	RNA_def_struct_ui_icon(srna, ICON_OBJECT_DATA);
 
@@ -2385,7 +2389,7 @@ static void rna_def_object(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "parent", PROP_POINTER, PROP_NONE);
 	RNA_def_property_pointer_funcs(prop, NULL, "rna_Object_parent_set", NULL, NULL);
 	RNA_def_property_flag(prop, PROP_EDITABLE | PROP_ID_SELF_CHECK);
-	RNA_def_property_ui_text(prop, "Parent", "Parent Object");
+	RNA_def_property_ui_text(prop, "Parent", "Parent Object, Python: own.parent, setParent(parent, compound=True, ghost=True), own.removeParent(), ob = own.children[0]");
 	RNA_def_property_update(prop, NC_OBJECT | ND_DRAW, "rna_Object_dependency_update");
 
 	prop = RNA_def_property(srna, "parent_type", PROP_ENUM, PROP_NONE);
@@ -2462,7 +2466,7 @@ static void rna_def_object(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "location", PROP_FLOAT, PROP_TRANSLATION);
 	RNA_def_property_float_sdna(prop, NULL, "loc");
 	RNA_def_property_editable_array_func(prop, "rna_Object_location_editable");
-	RNA_def_property_ui_text(prop, "Location", "Location of the object");
+	RNA_def_property_ui_text(prop, "Location", "Location of the object, Python: own.applyMovement((0.0, 0.1, 0.0), True), own.applyForce((x, y, z), local), own.worldPosition = 0.0, 0.0, 0.0, own.localPosition = x, y, z");
 	RNA_def_property_ui_range(prop, -FLT_MAX, FLT_MAX, 1, RNA_TRANSLATION_PREC_DEFAULT);
 	RNA_def_property_update(prop, NC_OBJECT | ND_TRANSFORM, "rna_Object_internal_update");
 
@@ -2488,7 +2492,7 @@ static void rna_def_object(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "rotation_euler", PROP_FLOAT, PROP_EULER);
 	RNA_def_property_float_sdna(prop, NULL, "rot");
 	RNA_def_property_editable_array_func(prop, "rna_Object_rotation_euler_editable");
-	RNA_def_property_ui_text(prop, "Euler Rotation", "Rotation in Eulers");
+	RNA_def_property_ui_text(prop, "Euler Rotation", "Rotation in Eulers, Python: own.applyRotation((0.0, 0.0, 0.5), True), own.applyTorque((x, y, z), local), to copy a objects Rotation use: own.worldOrientation = other.worldOrientation");
 	RNA_def_property_update(prop, NC_OBJECT | ND_TRANSFORM, "rna_Object_internal_update");
 
 	prop = RNA_def_property(srna, "rotation_mode", PROP_ENUM, PROP_NONE);
@@ -2504,7 +2508,7 @@ static void rna_def_object(BlenderRNA *brna)
 	RNA_def_property_editable_array_func(prop, "rna_Object_scale_editable");
 	RNA_def_property_ui_range(prop, -FLT_MAX, FLT_MAX, 1, 3);
 	RNA_def_property_float_array_default(prop, default_scale);
-	RNA_def_property_ui_text(prop, "Scale", "Scaling of the object");
+	RNA_def_property_ui_text(prop, "Scale", "Scaling of the object, x, y, z, own.worldScale = 1.0, 1.0, 1.0, own.localScale = 1.0, 1.0, 1.0");
 	RNA_def_property_update(prop, NC_OBJECT | ND_TRANSFORM, "rna_Object_internal_update");
 
 	prop = RNA_def_property(srna, "dimensions", PROP_FLOAT, PROP_XYZ_LENGTH);
@@ -2740,7 +2744,7 @@ static void rna_def_object(BlenderRNA *brna)
 
 	prop = RNA_def_property(srna, "hide_render", PROP_BOOLEAN, PROP_NONE);
 	RNA_def_property_boolean_sdna(prop, NULL, "restrictflag", OB_RESTRICT_RENDER);
-	RNA_def_property_ui_text(prop, "Restrict Render", "Restrict renderability");
+	RNA_def_property_ui_text(prop, "Restrict Render", "Restrict renderability, Python: own.visible = 0");
 	RNA_def_property_ui_icon(prop, ICON_RESTRICT_RENDER_OFF, 1);
 	RNA_def_property_update(prop, NC_OBJECT | ND_DRAW, "rna_Object_hide_update");
 
@@ -2762,7 +2766,7 @@ static void rna_def_object(BlenderRNA *brna)
 	prop = RNA_def_property(srna, "slow_parent_offset", PROP_FLOAT, PROP_NONE | PROP_UNIT_TIME);
 	RNA_def_property_float_sdna(prop, NULL, "sf");
 	RNA_def_property_range(prop, MINAFRAMEF, MAXFRAMEF);
-	RNA_def_property_ui_text(prop, "Slow Parent Offset", "Delay in the parent relationship");
+	RNA_def_property_ui_text(prop, "Slow Parent Offset", "Delay in the parent relationship, Python: own.timeOffset = 2.0");
 	RNA_def_property_update(prop, NC_OBJECT | ND_TRANSFORM, "rna_Object_internal_update");
 
 	/* depsgraph hack */

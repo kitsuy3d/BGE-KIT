@@ -1495,7 +1495,7 @@ class WM_OT_copy_prev_settings(Operator):
 class WM_OT_blenderplayer_start(Operator):
     """Launch the blender-player with the current blend-file"""
     bl_idname = "wm.blenderplayer_start"
-    bl_label = "Start Game In Player"
+    bl_label = "Start Game In Main Player"
 
     def execute(self, context):
         import os
@@ -1508,7 +1508,7 @@ class WM_OT_blenderplayer_start(Operator):
         blender_bin_path = bpy.app.binary_path
         blender_bin_dir = os.path.dirname(blender_bin_path)
         ext = os.path.splitext(blender_bin_path)[-1]
-        player_path = os.path.join(blender_bin_dir, "blenderplayer" + ext)
+        player_path = os.path.join(blender_bin_dir, "BlenderPlayer" + ext)
         # done static vars
 
         if sys.platform == "darwin":
@@ -1529,7 +1529,54 @@ class WM_OT_blenderplayer_start(Operator):
             "-g", "show_framerate", "=", "%d" % gs.show_framerate_profile,
             "-g", "show_profile", "=", "%d" % gs.show_framerate_profile,
             "-g", "show_properties", "=", "%d" % gs.show_debug_properties,
-            "-g", "ignore_deprecation_warnings", "=", "%d" % (not gs.use_deprecation_warnings),
+            "-g", "ignore_deprecation_warnings", "=", "%d" % (not gs.pro_mode),
+        ])
+
+        # finish the call with the path to the blend file
+        args.append(filepath)
+
+        subprocess.call(args)
+        os.remove(filepath)
+        return {'FINISHED'}
+
+class WM_OT_velocityplayer_start(Operator):
+    """Launch the blender-player with the current blend-file"""
+    bl_idname = "wm.velocityplayer_start"
+    bl_label = "Start Game In Velocity Player"
+
+    def execute(self, context):
+        import os
+        import sys
+        import subprocess
+
+        gs = context.scene.game_settings
+
+        # these remain the same every execution
+        blender_bin_path = bpy.app.binary_path
+        blender_bin_dir = os.path.dirname(blender_bin_path)
+        ext = os.path.splitext(blender_bin_path)[-1]
+        player_path = os.path.join(blender_bin_dir, "VelocityPlayer" + ext)
+        # done static vars
+
+        if sys.platform == "darwin":
+            player_path = os.path.join(blender_bin_dir, "../../../velocityplayer.app/Contents/MacOS/velocityplayer")
+
+        if not os.path.exists(player_path):
+            self.report({'ERROR'}, "Player path: %r not found" % player_path)
+            return {'CANCELLED'}
+
+        filepath = bpy.data.filepath + '~' if bpy.data.is_saved else os.path.join(bpy.app.tempdir, "game.blend")
+        bpy.ops.wm.save_as_mainfile('EXEC_DEFAULT', filepath=filepath, copy=True)
+
+        # start the command line call with the player path
+        args = [player_path]
+
+        # handle some UI options as command line arguments
+        args.extend([
+            "-g", "show_framerate", "=", "%d" % gs.show_framerate_profile,
+            "-g", "show_profile", "=", "%d" % gs.show_framerate_profile,
+            "-g", "show_properties", "=", "%d" % gs.show_debug_properties,
+            "-g", "ignore_deprecation_warnings", "=", "%d" % (not gs.pro_mode),
         ])
 
         # finish the call with the path to the blend file
@@ -2336,6 +2383,25 @@ class WM_OT_app_template_install(Operator):
         wm.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
+class WM_OT_export_with_bpplayer(Operator):
+    """Open BPplayer to export you game"""
+    bl_idname = "wm.export_with_bpplayer"
+    bl_label = ""
+    bl_options = {'INTERNAL'}
+
+
+    def execute(self, context):
+        import os, sys, subprocess
+        
+        if sys.platform == "win32":
+            os.startfile(bpy.app.binary_path[:-11] + "blendblockConverter\BPPlayerGUI.exe")
+            return {'FINISHED'}
+    
+        exe_path = os.path.join(os.path.dirname(bpy.app.binary_path), "blendblockConverter", "BPPlayerGUI")
+        subprocess.run([exe_path])
+        return {'FINISHED'}
+
+
 
 classes = (
     BRUSH_OT_active_index_set,
@@ -2350,6 +2416,7 @@ classes = (
     WM_OT_appconfig_activate,
     WM_OT_appconfig_default,
     WM_OT_blenderplayer_start,
+    WM_OT_velocityplayer_start,
     WM_OT_context_collection_boolean_set,
     WM_OT_context_cycle_array,
     WM_OT_context_cycle_enum,
@@ -2390,4 +2457,5 @@ classes = (
     WM_OT_sysinfo,
     WM_OT_theme_install,
     WM_OT_url_open,
+    WM_OT_export_with_bpplayer,
 )

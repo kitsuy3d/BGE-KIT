@@ -1,0 +1,39 @@
+// Improved Blur Shader for Blender Game Engine (BGE)
+uniform sampler2D bgl_RenderedTexture; // Rendered texture input
+uniform float blurAmount;              // Amount of blur (larger values = more blur)
+
+void main()
+{
+    vec2 texCoord = gl_TexCoord[0].st;
+    vec2 texOffset = blurAmount / vec2(textureSize(bgl_RenderedTexture, 0)); // Adjust offset by blurAmount
+
+    // Initialize color accumulation
+    vec4 color = vec4(0.0);
+
+    // Sample surrounding pixels for blur effect (5x5 kernel)
+    // The weights can be adjusted to balance color better
+    float weightSum = 0.0;
+
+    // Offset for a 5x5 kernel
+    for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+            float weight = 1.0; // Default weight
+
+            // Adjust the weight based on distance (using a simple Gaussian-like falloff)
+            float dist = float(abs(x)) + float(abs(y));
+            if (dist == 0.0) {
+                weight = 0.24; // Center pixel weight
+            } else if (dist == 1.0) {
+                weight = 0.09; // Adjacent pixels
+            } else if (dist == 2.0) {
+                weight = 0.05; // Corner pixels
+            }
+
+            color += texture2D(bgl_RenderedTexture, texCoord + texOffset * vec2(float(x), float(y))) * weight;
+            weightSum += weight;
+        }
+    }
+
+    // Normalize the accumulated color to prevent color tinting
+    gl_FragColor = color / weightSum;
+}

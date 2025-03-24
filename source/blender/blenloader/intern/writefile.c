@@ -3899,10 +3899,25 @@ static bool write_file_handle(
 #endif
 
 	sprintf(buf, "BLENDER%c%c%.3d",
-	        (sizeof(void *) == 8)      ? '-' : '_',
-	        (ENDIAN_ORDER == B_ENDIAN) ? 'V' : 'v',
-	        BLENDER_VERSION);
+			(sizeof(void*) == 8) ? '-' : '_',
+			(ENDIAN_ORDER == B_ENDIAN) ? 'V' : 'v',
+			BLENDER_VERSION);
 
+	bool hasPrtFile = (write_flags & G_FILE_SAVE_COPY_PROTECTED);
+	if (hasPrtFile) {
+		char empty_array[250];
+		mywrite(wd, buf, 12);
+		mywrite(wd, empty_array, sizeof(empty_array));
+		char key[302];
+		sprintf(key, "d43d6c30-db11-417b-bf60-c8685c9311bd69ad9683-d89b-4d82-837c-f5cd2e106a38b54c60aa-9a35-4106-9d4f-d08ed4526831%s%.1d%.1d%s",
+			"UPBGE26", UPBGE_VERSION, UPBGE_SUBVERSION, "2fd68263-8ca7-4d17-a4dd-18fd9446eb59dd4a199f-d16b-4f28-85ba-898456042ff583ed679a-fb33-4268-b981-9e6a4603fff621a89f43-68d9-4ed5-9ee8-3424baaf15925fd40d87-8a59-4458-b154-1dc150443817");
+		mywrite(wd, key, sizeof(key) - 1);
+		mywrite(wd, empty_array, sizeof(empty_array));
+
+		printf("Protected file created! \n");
+	}
+
+	
 	mywrite(wd, buf, 12);
 
 	write_renderinfo(wd, mainvar);
@@ -3928,10 +3943,12 @@ static bool write_file_handle(
 
 			switch ((ID_Type)GS(id->name)) {
 				case ID_WM:
-					write_windowmanager(wd, (wmWindowManager *)id);
+					if (!hasPrtFile)
+						write_windowmanager(wd, (wmWindowManager *)id);
 					break;
 				case ID_SCR:
-					write_screen(wd, (bScreen *)id);
+					if (!hasPrtFile)
+						write_screen(wd, (bScreen *)id);
 					break;
 				case ID_MC:
 					write_movieclip(wd, (MovieClip *)id);
@@ -4054,7 +4071,8 @@ static bool write_file_handle(
 	 *
 	 * Note that we *borrow* the pointer to 'DNAstr',
 	 * so writing each time uses the same address and doesn't cause unnecessary undo overhead. */
-	writedata(wd, DNA1, wd->sdna->datalen, wd->sdna->data);
+	writedata(wd, (hasPrtFile ? DNA2 : DNA1), wd->sdna->datalen, wd->sdna->data);
+
 
 #ifdef USE_NODE_COMPAT_CUSTOMNODES
 	/* compatibility data not created on undo */

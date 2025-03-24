@@ -882,7 +882,7 @@ void threaded_makeshadowbufs(Render *re)
 			if ((g_break=test_break(re->tbh)))
 				break;
 
-			PIL_sleep_ms(50);
+			PIL_sleep_ms(500);
 
 			BLI_thread_lock(LOCK_CUSTOM1);
 			for (lar=re->lampren.first; lar; lar= lar->next)

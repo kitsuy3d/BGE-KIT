@@ -70,6 +70,52 @@ PyDoc_STRVAR(gPySetNumIterations__doc__,
              "setNumIterations(int numiter)\n"
              "This sets the number of iterations for an iterative constraint solver"
              );
+
+PyDoc_STRVAR(gPySetErp__doc__,
+             "setErp(float numiter)\n"
+             "SplitImpulse penetration depth before for use, default 0.2"
+             );
+
+PyDoc_STRVAR(gPySetErp2__doc__,
+             "setErp2(float numiter)\n"
+             "SplitImpulse penetration depth before for use, default 0.8"
+             );
+
+PyDoc_STRVAR(gPySetGlobalCfm__doc__,
+             "setGlobalCfm(float numiter)\n"
+             "constraint force mixing for contacts and non-contacts, default 0.0"
+             );
+
+PyDoc_STRVAR(gPySetSplitImpulse__doc__,
+             "setSplitImpulse(bool value)\n"
+             "By default, Bullet solves positional constraints and velocity constraints coupled together."
+             );
+
+PyDoc_STRVAR(gPySetSplitImpulsePenetrationThreshold__doc__,
+             "setSplitImpulsePenetrationThreshold(float numiter)\n"
+             "Penetration Threshold before splitImpulse is used, default -0.04"
+             );
+
+PyDoc_STRVAR(gPySetSplitImpulseTurnErp__doc__,
+             "setSplitImpulseTurnErp(float numiter)\n"
+             "Constraints fix for splitImpulse, default 0.1"
+             );
+
+PyDoc_STRVAR(gPySetLinearSlop__doc__,
+             "setLinearSlop(float numiter)\n"
+             "Defines the penetration depth for object collisions. A value of 1 equals to 1 world unit penetration depth (overlapping)."
+             );
+
+PyDoc_STRVAR(gPySetWarmstartingFactor__doc__,
+             "setWarmstartingFactor(float numiter)\n"
+             "This sets the number of physics warmstarting factor, last frames physics with 1.0 or not with 0.0"
+             );
+
+PyDoc_STRVAR(gPySetMaxGyroscopicForce__doc__,
+             "setMaxGyroscopicForce(float numiter)\n"
+             "It is only used for 'explicit' version of gyroscopic force."
+             );
+
 PyDoc_STRVAR(gPySetNumTimeSubSteps__doc__,
              "setNumTimeSubSteps(int numsubstep)\n"
              "This sets the number of substeps for each physics proceed. Tradeoff quality for performance."
@@ -220,6 +266,150 @@ static PyObject *gPySetNumIterations(PyObject *self,
 	Py_RETURN_NONE;
 }
 
+static PyObject *gPySetErp(PyObject *self,
+                                    PyObject *args,
+                                    PyObject *kwds)
+{
+	float erp;
+	if (PyArg_ParseTuple(args, "f", &erp)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetErp(erp);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetErp2(PyObject *self,
+                                    PyObject *args,
+                                    PyObject *kwds)
+{
+	float erp2;
+	if (PyArg_ParseTuple(args, "f", &erp2)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetErp2(erp2);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetGlobalCfm(PyObject *self,
+                                 PyObject *args,
+                                 PyObject *kwds)
+{
+	float globalCfm;
+	if (PyArg_ParseTuple(args, "f", &globalCfm)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetGlobalCfm(globalCfm);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetSplitImpulse(PyObject *self,
+                                    PyObject *args,
+                                    PyObject *kwds)
+{
+	int splitImpulse;
+	if (PyArg_ParseTuple(args, "i", &splitImpulse)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetSplitImpulse(splitImpulse);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetSplitImpulsePenetrationThreshold(PyObject *self,
+                                    PyObject *args,
+                                    PyObject *kwds)
+{
+	float splitImpulsePenetrationThreshold;
+	if (PyArg_ParseTuple(args, "f", &splitImpulsePenetrationThreshold)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetSplitImpulsePenetrationThreshold(splitImpulsePenetrationThreshold);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetSplitImpulseTurnErp(PyObject *self,
+                                    PyObject *args,
+                                    PyObject *kwds)
+{
+	float splitImpulseTurnErp;
+	if (PyArg_ParseTuple(args, "f", &splitImpulseTurnErp)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetSplitImpulseTurnErp(splitImpulseTurnErp);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetLinearSlop(PyObject *self,
+                                  PyObject *args,
+                                  PyObject *kwds)
+{
+	float slop;
+	if (PyArg_ParseTuple(args, "f", &slop)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetLinearSlop(slop);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+
+static PyObject *gPySetWarmstartingFactor(PyObject *self,
+                                          PyObject *args,
+                                          PyObject *kwds)
+{
+	float factor;
+	if (PyArg_ParseTuple(args, "f", &factor)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetWarmstartingFactor(factor);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject *gPySetMaxGyroscopicForce(PyObject *self,
+                                          PyObject *args,
+                                          PyObject *kwds)
+{
+	float maxGyroscopicForce;
+	if (PyArg_ParseTuple(args, "f", &maxGyroscopicForce)) {
+		if (KX_GetPhysicsEnvironment()) {
+			KX_GetPhysicsEnvironment()->SetMaxGyroscopicForce(maxGyroscopicForce);
+		}
+	}
+	else {
+		return nullptr;
+	}
+	Py_RETURN_NONE;
+}
 
 static PyObject *gPySetDeactivationTime(PyObject *self,
                                         PyObject *args,
@@ -481,7 +671,6 @@ static PyObject *gPyCreateConstraint(PyObject *self,
 		PHY_IPhysicsController *physctrl2 = (PHY_IPhysicsController *)physicsid2;
 		if (physctrl) { //TODO:check for existence of this pointer!
 			if (constrainttype == PHY_VEHICLE_CONSTRAINT) {
-				EXP_ShowDeprecationWarning("bge.constraints.createConstraint(...)", "bge.constraints.createVehicle(chassis)");
 				PHY_IVehicle *vehicle = KX_GetPhysicsEnvironment()->CreateVehicle(physctrl);
 
 				KX_VehicleWrapper *wrap = new KX_VehicleWrapper(vehicle);
@@ -611,10 +800,27 @@ static struct PyMethodDef physicsconstraints_methods[] = {
 	 METH_VARARGS, (const char *)gPySetGravity__doc__},
 	{"setDebugMode", (PyCFunction)gPySetDebugMode,
 	 METH_VARARGS, (const char *)gPySetDebugMode__doc__},
-
-	/// settings that influence quality of the rigidbody dynamics
 	{"setNumIterations", (PyCFunction)gPySetNumIterations,
 	 METH_VARARGS, (const char *)gPySetNumIterations__doc__},
+	{"setErp", (PyCFunction)gPySetErp,
+	 METH_VARARGS, (const char *)gPySetErp__doc__},
+	{"setErp2", (PyCFunction)gPySetErp2,
+	 METH_VARARGS, (const char *)gPySetErp2__doc__},
+	{"setGlobalCfm", (PyCFunction)gPySetGlobalCfm,
+	 METH_VARARGS, (const char *)gPySetGlobalCfm__doc__},
+	{"setSplitImpulse", (PyCFunction)gPySetSplitImpulse,
+	 METH_VARARGS, (const char *)gPySetSplitImpulse__doc__},
+	{"setSplitImpulsePenetrationThreshold", (PyCFunction)gPySetSplitImpulsePenetrationThreshold,
+	 METH_VARARGS, (const char *)gPySetSplitImpulsePenetrationThreshold__doc__},
+	{"setSplitImpulseTurnErp", (PyCFunction)gPySetSplitImpulseTurnErp,
+	 METH_VARARGS, (const char *)gPySetSplitImpulseTurnErp__doc__},
+	{"setLinearSlop", (PyCFunction)gPySetLinearSlop,
+	 METH_VARARGS, (const char *)gPySetLinearSlop__doc__},
+	{"setWarmstartingFactor", (PyCFunction)gPySetWarmstartingFactor,
+	 METH_VARARGS, (const char *)gPySetWarmstartingFactor__doc__},
+	{"setMaxGyroscopicForce", (PyCFunction)gPySetMaxGyroscopicForce,
+	 METH_VARARGS, (const char *)gPySetMaxGyroscopicForce__doc__},
+	/// settings that influence quality of the rigidbody dynamics
 
 	{"setNumTimeSubSteps", (PyCFunction)gPySetNumTimeSubSteps,
 	 METH_VARARGS, (const char *)gPySetNumTimeSubSteps__doc__},
@@ -671,7 +877,7 @@ static struct PyMethodDef physicsconstraints_methods[] = {
 
 static struct PyModuleDef PhysicsConstraints_module_def = {
 	PyModuleDef_HEAD_INIT,
-	"PhysicsConstraints",  /* m_name */
+	"GamePhysics",  /* m_name */
 	PhysicsConstraints_module_documentation,  /* m_doc */
 	0,  /* m_size */
 	physicsconstraints_methods,  /* m_methods */
