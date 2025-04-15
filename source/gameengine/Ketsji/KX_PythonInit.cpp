@@ -446,7 +446,6 @@ static PyObject *gPySetMaxPhysicsFrame(PyObject *, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:setMaxPhysicsFrame", &frame)) {
 		return nullptr;
 	}
-
 	KX_GetActiveEngine()->SetMaxPhysicsFrame(frame);
 	Py_RETURN_NONE;
 }
@@ -454,6 +453,16 @@ static PyObject *gPySetMaxPhysicsFrame(PyObject *, PyObject *args)
 static PyObject *gPyGetMaxPhysicsFrame(PyObject *)
 {
 	return PyBool_FromLong(KX_GetActiveEngine()->GetMaxPhysicsFrame());
+}
+
+static PyObject *gPySetNeedsParents(PyObject *, PyObject *args)
+{
+	int parents;
+	if (!PyArg_ParseTuple(args, "i:setNeedsParents", &parents)) {
+		return nullptr;
+	}
+	KX_GetActiveEngine()->SetNeedsParents(parents);
+	Py_RETURN_NONE;
 }
 /*
 static PyObject *gPySetNumIterations(PyObject *, PyObject *args)
@@ -953,6 +962,7 @@ static struct PyMethodDef game_methods[] = {
 	{"setMaxLogicFrame", (PyCFunction)gPySetMaxLogicFrame, METH_VARARGS, (const char *)"Sets the max number of logic frame per render frame"},
 	{"getMaxPhysicsFrame", (PyCFunction)gPyGetMaxPhysicsFrame, METH_NOARGS, (const char *)"Gets the max number of physics frame per render frame"},
 	{"setMaxPhysicsFrame", (PyCFunction)gPySetMaxPhysicsFrame, METH_VARARGS, (const char *)"Sets the max number of physics farme per render frame"},
+	{"setNeedsParents", (PyCFunction)gPySetNeedsParents, METH_VARARGS, (const char *)"Sets parents update from 3 to 1"},
 	//{"setNumIterations", (PyCFunction)gPySetNumIterations, METH_VARARGS, (const char *)"Sets the number of physics constraint updates per logic frame"},
 	{"getLogicTicRate", (PyCFunction)gPyGetLogicTicRate, METH_NOARGS, (const char *)"Gets the logic tic rate"},
 	{"setLogicTicRate", (PyCFunction)gPySetLogicTicRate, METH_VARARGS, (const char *)"Sets the logic tic rate"},

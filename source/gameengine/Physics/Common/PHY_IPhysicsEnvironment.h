@@ -106,8 +106,8 @@ public:
 	{
 	}
 	/// Perform an integration step of duration 'timeStep'.
+	virtual void ProceedDeltaTimeCar(float timeStep, float interval) = 0;
 	virtual void ProceedDeltaTime(float timeStep, float interval) = 0;
-	//virtual void ProceedDeltaTimeCar(float timeStep, float interval) = 0;
 	/// draw debug lines (make sure to call this during the render phase, otherwise lines are not drawn properly)
 	virtual void DebugDrawWorld()
 	{

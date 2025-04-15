@@ -170,7 +170,7 @@ public:
 	}
 	/// Perform an integration step of duration 'timeStep'.
 	virtual void ProceedDeltaTime(float timeStep, float interval);
-	//virtual void ProceedDeltaTimeCar(float timeStep, float interval);
+	virtual void ProceedDeltaTimeCar(float timeStep, float interval);
 
 	/**
 	 * Called by Bullet for every physical simulation (sub)tick.

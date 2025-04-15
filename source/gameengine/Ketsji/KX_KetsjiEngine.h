@@ -269,6 +269,7 @@ private:
 	double m_anim_framerate;
 	bool m_needsRender;
 	bool m_needsAnimation;
+	bool m_needsParents;
 
 	bool m_doRender;  /* whether or not the scene should be rendered after the logic frame */
 
@@ -576,6 +577,8 @@ public:
 	 * Sets the maximum number of physics frame before render frame
 	 */
 	void SetMaxPhysicsFrame(bool frame);
+	
+	void SetNeedsParents(bool parents);
 	/**
 	 * Gets deltatime from engine calculation
 	 */

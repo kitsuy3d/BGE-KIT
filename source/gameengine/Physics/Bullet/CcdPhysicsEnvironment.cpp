@@ -731,29 +731,20 @@ void CcdPhysicsEnvironment::SimulationSubtickCallback(btScalar timeStep)
 	}
 }
 
-void CcdPhysicsEnvironment::ProceedDeltaTime(float timeStep, float interval)
+void CcdPhysicsEnvironment::ProceedDeltaTimeCar(float timeStep, float interval)
 {
-	//std::set<CcdPhysicsController *>::iterator it;
+	std::set<CcdPhysicsController *>::iterator it;
 	m_callbackCounter.clear();
-	//m_newFrame = true;
 	int i;
-
-	// Update Bullet global variables.
-	//gDeactivationTime = m_deactivationTime;
-	//gContactBreakingThreshold = m_contactBreakingThreshold;
-
-	//for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
-	//	(*it)->SynchronizeMotionStates(timeStep);
-	//}
-	for (i = 0; i < m_wrapperVehicles.size(); i++) {
-		WrapperVehicle *veh = m_wrapperVehicles[i];
-		veh->SyncWheels();
+	for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
+		(*it)->SynchronizeMotionStates(timeStep);
 	}
+	//for (i = 0; i < m_wrapperVehicles.size(); i++) {
+	//	WrapperVehicle *veh = m_wrapperVehicles[i];
+	//	veh->SyncWheels();
+	//}
 	float subStep = timeStep / float(m_numTimeSubSteps);
 	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);
-	//if (i) {
-	//	CallbackTriggers();
-	//}
 	for (int r=0;r<i;r++) {
 		m_dynamicsWorld->stepSimulationRun();
 		CallbackTriggers();
@@ -764,48 +755,48 @@ void CcdPhysicsEnvironment::ProceedDeltaTime(float timeStep, float interval)
 		return;
 	}
 	ProcessFhSprings(subStep * i);
+	for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
+		(*it)->SynchronizeMotionStates(timeStep);
+	}
+	for (i = 0; i < m_wrapperVehicles.size(); i++) {
+		WrapperVehicle *veh = m_wrapperVehicles[i];
+		veh->SyncWheels();
+	}
+}
 
-
+void CcdPhysicsEnvironment::ProceedDeltaTime(float timeStep, float interval)
+{
+	//std::set<CcdPhysicsController *>::iterator it;
+	m_callbackCounter.clear();
+	int i;
 	//for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
 	//	(*it)->SynchronizeMotionStates(timeStep);
 	//}
-
+	for (i = 0; i < m_wrapperVehicles.size(); i++) {
+		WrapperVehicle *veh = m_wrapperVehicles[i];
+		veh->SyncWheels();
+	}
+	float subStep = timeStep / float(m_numTimeSubSteps);
+	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);
+	for (int r=0;r<i;r++) {
+		m_dynamicsWorld->stepSimulationRun();
+		CallbackTriggers();
+	}
+	m_dynamicsWorld->synchronizeMotionStates();
+	m_dynamicsWorld->clearForces();
+	if (i < 1) {
+		return;
+	}
+	ProcessFhSprings(subStep * i);
+	//for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
+	//	(*it)->SynchronizeMotionStates(timeStep);
+	//}
 	//for (i = 0; i < m_wrapperVehicles.size(); i++) {
 	//	WrapperVehicle *veh = m_wrapperVehicles[i];
 	//	veh->SyncWheels();
 	//}
 }
 
-/*void CcdPhysicsEnvironment::ProceedDeltaTimeCar(float timeStep, float interval)
-{
-	std::set<CcdPhysicsController *>::iterator it;
-	int i;
-
-	// Update Bullet global variables.
-	gDeactivationTime = m_deactivationTime;
-	gContactBreakingThreshold = m_contactBreakingThreshold;
-
-	for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
-		(*it)->SynchronizeMotionStates(timeStep);
-	}
-
-	float subStep = timeStep / float(m_numTimeSubSteps);
-	i = m_dynamicsWorld->stepSimulation(interval, 25, subStep);
-
-	ProcessFhSprings(subStep * i);
-
-	for (it = m_controllers.begin(); it != m_controllers.end(); it++) {
-		(*it)->SynchronizeMotionStates(timeStep);
-	}
-
-	for (i = 0; i < m_wrapperVehicles.size(); i++) {
-		WrapperVehicle *veh = m_wrapperVehicles[i];
-		veh->SyncWheels();
-	}
-
-	CallbackTriggers();
-}
-*/
 class ClosestRayResultCallbackNotMe : public btCollisionWorld::ClosestRayResultCallback
 {
 	btCollisionObject *m_owner;

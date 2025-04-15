@@ -215,6 +215,7 @@ KX_KetsjiEngine::KX_KetsjiEngine()
 	m_anim_framerate(25.0),
 	m_needsRender(true),
 	m_needsAnimation(true),
+	m_needsParents(true),
 	m_doRender(true),
 	m_exitKey(SCA_IInputDevice::ENDKEY),
 	m_average_framerate(0.0),
@@ -344,38 +345,29 @@ void KX_KetsjiEngine::EndFrame()
 	// update delta Time
 	ClockTiming();
 	// If We have time sleep here
-	if (m_flags & FIXED_FRAMERATE) {// timings for old games
+	m_sleeptime = 2;
+	if (m_timestep > m_deltaTime - m_overframetime + 6e-6) {
 		while (m_timestep > m_deltaTime - m_overframetime + 6e-6) {
-			std::this_thread::sleep_for(std::chrono::milliseconds((long)((2e-3 * m_maxLogicFrame))));
-			ClockTiming();
+			if (m_timestep > (m_deltaTime * 1.5)) {
+				m_sleeptime += 2;
+				std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
+				ClockTiming();
+			}
+			else if (m_timestep > (m_deltaTime * 1.2)) {
+				m_sleeptime += 4;
+				std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
+				ClockTiming();
+			}
+			else {
+				m_sleeptime += 40;
+				std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
+				ClockTiming();
+			}
 		}
 		m_overframetime = 0.0;
 	}
-	else {// new timing mode
-		m_sleeptime = 2;
-		if (m_timestep > m_deltaTime - m_overframetime + 6e-6) {
-			while (m_timestep > m_deltaTime - m_overframetime + 6e-6) {
-				if (m_timestep > (m_deltaTime * 1.5)) {
-					m_sleeptime += 2;
-					std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
-					ClockTiming();
-				}
-				else if (m_timestep > (m_deltaTime * 1.2)) {
-					m_sleeptime += 4;
-					std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
-					ClockTiming();
-				}
-				else {
-					m_sleeptime += 40;
-					std::this_thread::sleep_for(std::chrono::milliseconds((long)(((m_timestep - m_deltaTime)) * m_maxLogicFrame) / m_sleeptime));
-					ClockTiming();
-				}
-			}
-			m_overframetime = 0.0;
-		}
-		else {
-			m_overframetime = m_overframetime * 0.5;
-		}
+	else {
+		m_overframetime = m_overframetime * 0.5;
 	}
 	// Go to next profiling measurement, time spent after this call is shown in the next frame.
 	m_logger.NextMeasurement();
@@ -649,7 +641,7 @@ void KX_KetsjiEngine::Render()
 
 			LogicBeginFrame(scene);
 
-			if (m_flags & FIXED_FRAMERATE) {
+			if (m_needsParents) {
 				m_logger.StartLog(tc_scenegraph);
 				UpdateParents(scene);
 				m_logger.StartLog(tc_logic);
@@ -672,16 +664,16 @@ void KX_KetsjiEngine::Render()
 			LogicUpdateFrame(scene);
 
 			LogicEndFrame(scene);
-
-			if (m_flags & FIXED_FRAMERATE) {
+			if (m_needsParents) {
 				m_logger.StartLog(tc_scenegraph);
 				UpdateParents(scene);
-				//m_logger.StartLog(tc_physics);
-				//scene->GetPhysicsEnvironment()->ProceedDeltaTimeCar(m_timestep, m_framestep);
-			} //else {
+			}
 			m_logger.StartLog(tc_physics);
-			scene->GetPhysicsEnvironment()->ProceedDeltaTime(m_timestep, m_physicsTime);
-			//}
+			if (m_flags & FIXED_FRAMERATE) {
+				scene->GetPhysicsEnvironment()->ProceedDeltaTimeCar(m_timestep, m_framestep);
+			} else {
+				scene->GetPhysicsEnvironment()->ProceedDeltaTime(m_timestep, m_physicsTime);
+			}
 
 			//m_logger.StartLog(tc_physics);
 			// Perform physics calculations on the scene. This can involve
@@ -1322,7 +1314,7 @@ void KX_KetsjiEngine::RenderDebugProperties()
 		// Title for profiling("Profile")
 		// Adds the constant x indent (0 for now) to the title x margin
 		m_debugDraw.RenderBox2d(mt::vec2(xcoord + const_xindent, (ycoord + 190)), mt::vec2(160, 300), gray);
-		m_debugDraw.RenderText2d(" RETRO UPBGE 26016a", mt::vec2(xcoord + const_xindent + title_xmargin, ycoord), white);
+		m_debugDraw.RenderText2d(" RETRO UPBGE 26016b", mt::vec2(xcoord + const_xindent + title_xmargin, ycoord), white);
 
 		// Increase the indent by default increase
 		ycoord += const_ysize;
@@ -1944,6 +1936,11 @@ bool KX_KetsjiEngine::GetMaxPhysicsFrame()
 void KX_KetsjiEngine::SetMaxPhysicsFrame(bool frame)
 {
 	m_maxPhysicsFrame = frame;
+}
+
+void KX_KetsjiEngine::SetNeedsParents(bool parents)
+{
+	m_needsParents = parents;
 }
 
 double KX_KetsjiEngine::GetEngineDeltaTime()

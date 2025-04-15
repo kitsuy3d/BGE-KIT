@@ -78,7 +78,7 @@ class INFO_HT_header(Header):
         layout.operator("view3d.game_start", text="", icon="PLAY")
         row.label(text="Play", translate=1)
         row = layout.row(align=1)
-        row.operator("wm.splash", text="RETRO UPBGE 0.2.6016a", icon='BLENDER', emboss=1)
+        row.operator("wm.splash", text="RETRO UPBGE 0.2.6016b", icon='BLENDER', emboss=1)
         #layout.operator("wm.save_as_runtime", text="Make Game.exe", icon="GAME")
         layout.operator("wm.export_with_bpplayer", text="Export Game With BPplayer", icon='GAME')
         #row.label(text=scene.statistics(), translate=0)

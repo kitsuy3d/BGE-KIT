@@ -49,8 +49,8 @@ public:
 	DummyPhysicsEnvironment ();
 	virtual ~DummyPhysicsEnvironment ();
 // Perform an integration step of duration 'timeStep'.
+	virtual void ProceedDeltaTimeCar(float timeStep, float interval);
 	virtual void ProceedDeltaTime(float timeStep, float interval);
-	//virtual void ProceedDeltaTimeCar(float timeStep, float interval);
 	virtual void SetFixedTimeStep(bool useFixedTimeStep, float fixedTimeStep);
 	virtual float GetFixedTimeStep();
 
