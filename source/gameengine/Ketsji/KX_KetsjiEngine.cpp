@@ -218,7 +218,7 @@ KX_KetsjiEngine::KX_KetsjiEngine()
 	m_needsParents(true),
 	m_doRender(true),
 	m_exitKey(SCA_IInputDevice::ENDKEY),
-	m_average_framerate(0.0),
+	m_average_framerate(60.0),
 	m_showBoundingBox(KX_DebugOption::DISABLE),
 	m_showArmature(KX_DebugOption::DISABLE),
 	m_showCameraFrustum(KX_DebugOption::DISABLE),
@@ -390,10 +390,9 @@ void KX_KetsjiEngine::EndFrame()
 		if (m_flags & (SHOW_FRAMERATE)) {
 			m_rendertimeaverage = ((m_rendertimeaverage * (m_ticrate - 1.0)) + m_lastrendertime) / m_ticrate;
 		}
-
-		//if (m_overrendertime > (1.5 / m_renderrate)) {
-		//	m_overrendertime = 1.5 / m_renderrate;
-		//}
+		if (m_overrendertime > (1.5 / m_renderrate)) {
+			m_overrendertime = 1.5 / m_renderrate;
+		}
 	}
 	else {
 		// no render this time run endframe for timings
@@ -412,9 +411,9 @@ void KX_KetsjiEngine::EndFrame()
 		if (m_flags & (SHOW_FRAMERATE)) {
 			m_animationtimeaverage = ((m_animationtimeaverage * (m_ticrate - 1.0)) + m_lastanimationtime) / m_ticrate;
 		}
-		//if (m_overanimationtime > (1.5 / m_animationrate)) {
-		//	m_overanimationtime = 1.5 / m_animationrate;
-		//}
+		if (m_overanimationtime > (1.5 / m_animationrate)) {
+			m_overanimationtime = 1.5 / m_animationrate;
+		}
 	}
 	else {
 		m_needsAnimation = false;
@@ -925,8 +924,8 @@ void KX_KetsjiEngine::FrameOver()
 }
 void KX_KetsjiEngine::LogAverage()
 {
-	if (m_tottime < 1e-6) {
-		m_tottime = 1e-6;
+	if (m_tottime < 5e-3) {
+		m_tottime = 5e-3;
 	}
 //#ifdef WITH_PYTHON
 	for (m_i = tc_first; m_i < tc_numCategories; ++m_i) {
