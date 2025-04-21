@@ -875,13 +875,13 @@ wmWindow *WM_window_open_temp(bContext *C, int x, int y, int sizex, int sizey, i
 	ED_screen_refresh(CTX_wm_manager(C), win); /* test scale */
 
 	if (sa->spacetype == SPACE_IMAGE)
-		title = IFACE_("UPBGE_Velocity_Engine_Render");
+		title = IFACE_("Render");
 	else if (ELEM(sa->spacetype, SPACE_OUTLINER, SPACE_USERPREF))
-		title = IFACE_("UPBGE_Velocity_Engine_User_Preferences");
+		title = IFACE_("User_Preferences");
 	else if (sa->spacetype == SPACE_FILE)
-		title = IFACE_("UPBGE_Velocity_Engine_File_View");
+		title = IFACE_("File_View");
 	else
-		title = "UPBGE_Velocity_Engine";
+		title = "UPBGE26";
 
 	if (win->ghostwin) {
 		GHOST_SetTitle(win->ghostwin, title);

@@ -668,11 +668,11 @@ void KX_KetsjiEngine::Render()
 				UpdateParents(scene);
 			}
 			m_logger.StartLog(tc_physics);
-			if (m_flags & FIXED_FRAMERATE) {
-				scene->GetPhysicsEnvironment()->ProceedDeltaTimeCar(m_timestep, m_framestep);
-			} else {
-				scene->GetPhysicsEnvironment()->ProceedDeltaTime(m_timestep, m_physicsTime);
-			}
+			//if (m_flags & FIXED_FRAMERATE) {
+			//	scene->GetPhysicsEnvironment()->ProceedDeltaTimeCar(m_timestep, m_framestep);
+			//} else {
+			scene->GetPhysicsEnvironment()->ProceedDeltaTime(m_timestep, m_physicsTime);
+			//}
 
 			//m_logger.StartLog(tc_physics);
 			// Perform physics calculations on the scene. This can involve

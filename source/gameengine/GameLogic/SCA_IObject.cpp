@@ -60,7 +60,7 @@ SCA_IObject::SCA_IObject(const SCA_IObject& other)
 	m_initState(other.m_initState),
 	m_state(0),
 	m_firstState(other.m_firstState),
-	m_culledstate(0)
+	m_culledstate(other.m_culledstate)
 {
 	/* Registered objects and actuator are intentionally left empty.
 	 * A new object cannot be client of any actuator. */

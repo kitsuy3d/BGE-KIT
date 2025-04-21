@@ -10618,11 +10618,11 @@ static void read_libraries(FileData *basefd, ListBase *mainlist)
 						BLI_strncpy(fd->relabase, mainptr->curlib->filepath, sizeof(fd->relabase));
 					}
 					else {
-						blo_reportf_wrap(
-						        basefd->reports, RPT_INFO, TIP_("Read library:  '%s', '%s', parent '%s'"),
-						        mainptr->curlib->filepath,
-						        mainptr->curlib->name,
-						        library_parent_filepath(mainptr->curlib));
+						//blo_reportf_wrap(
+						        //basefd->reports, RPT_INFO, TIP_("Read library:  '%s', '%s', parent '%s'"),
+						        //mainptr->curlib->filepath,
+						        //mainptr->curlib->name,
+						        //library_parent_filepath(mainptr->curlib));
 						fd = blo_openblenderfile(mainptr->curlib->filepath, basefd->reports);
 					}
 					/* allow typing in a new lib path */
