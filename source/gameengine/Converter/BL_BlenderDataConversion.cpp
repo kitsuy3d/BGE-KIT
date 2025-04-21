@@ -1183,7 +1183,7 @@ static void BL_ConvertComponentsObject(KX_GameObject *gameobj, Object *blenderob
 			if (PyErr_Occurred()) {
 				PyErr_Print();
 			}
-			CM_Error("coulding import the module '" << pc->module << "'");
+			CM_Error("could not import the module '" << pc->module << "'");
 			pc = pc->next;
 			continue;
 		}
@@ -1842,27 +1842,17 @@ void BL_PostConvertBlenderObjects(KX_Scene *kxscene, const BL_SceneConverter& sc
 	EXP_ListValue<KX_GameObject> *objectlist = kxscene->GetObjectList();
 
 #ifdef WITH_PYTHON
-
-	for (KX_GameObject *gameobj : objectlist) {
-		if (gameobj->GetComponents()) {
-			// Register object for component update.
-			kxscene->GetPythonComponentManager().RegisterObject(gameobj);
-		}
-		if (gameobj->GetActivityCullingInfo().m_flags != KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
-			kxscene->AddCullingObject(gameobj);
-		}
-		//if (gameobj->GetMeshUser() != nullptr && gameobj->GetVisible()) {
-		//	kxscene->GetRenderList()->Add(CM_AddRef(gameobj));
-		//}
-		if (gameobj->GetVisible()) {
-			kxscene->GetRenderList()->Add(CM_AddRef(gameobj));
-		}
-	}
 	// Convert the python components of each object if the component execution is available.
 	if (G.f & G_SCRIPT_AUTOEXEC) {
 		for (KX_GameObject *gameobj : sumolist) {
 			Object *blenderobj = gameobj->GetBlenderObject();
 			BL_ConvertComponentsObject(gameobj, blenderobj);
+		}
+		for (KX_GameObject *gameobj : objectlist) {
+			if (gameobj->GetComponents()) {
+				// Register object for component update.
+				kxscene->GetPythonComponentManager().RegisterObject(gameobj);
+			}
 		}
 	}
 	else {
@@ -1870,6 +1860,16 @@ void BL_PostConvertBlenderObjects(KX_Scene *kxscene, const BL_SceneConverter& sc
 	}
 
 #endif  // WITH_PYTHON
+	//culling and render list stuff by kitsuy last fixed on 4-21-2025
+	for (KX_GameObject *gameobj : objectlist) {
+		if (gameobj->GetActivityCullingInfo().m_flags != KX_GameObject::ActivityCullingInfo::ACTIVITY_NONE) {
+			kxscene->AddCullingObject(gameobj);
+		}
+		if (gameobj->GetVisible()) {
+			kxscene->GetRenderList()->Add(CM_AddRef(gameobj));
+		}
+	}
+
 
 	// Init textures for all materials.
 	for (KX_BlenderMaterial *mat : sceneconverter.GetMaterials()) {
